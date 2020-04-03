@@ -32,7 +32,7 @@ class Admin(commands.Cog):
         if ctx.author == ctx.guild.owner:
             return True
 
-        admin_role = await db.extras.get_admin_role(self.bot.database, ctx.guild)
+        admin_role = await db.extras.get_admin_role(ctx)
         if admin_role:
             return ctx.author.top_role >= admin_role
 
@@ -54,10 +54,10 @@ class Admin(commands.Cog):
     async def adminrole(self, ctx, role: discord.Role = None):
         """Display or set the Administrator role."""
         if role:
-            await db.extras.set_admin_role(self.bot.database, ctx.guild, role)
+            await db.extras.set_admin_role(ctx, role)
             await send_embed(ctx.channel, f"{role.mention} is now the Administrator role.")
         else:
-            admin_role = await db.extras.get_admin_role(self.bot.database, ctx.guild)
+            admin_role = await db.extras.get_admin_role(ctx)
             if admin_role:
                 await send_embed(ctx.channel, f"{admin_role.mention} is the Administrator role.")
             else:
@@ -67,10 +67,10 @@ class Admin(commands.Cog):
     async def modrole(self, ctx, role: discord.Role = None):
         """Display or set the Moderator role."""
         if role:
-            await db.extras.set_mod_role(self.bot.database, ctx.guild, role)
+            await db.extras.set_mod_role(ctx, role)
             await send_embed(ctx.channel, f"{role.mention} is now the Moderator role.")
         else:
-            mod_role = await db.extras.get_mod_role(self.bot.database, ctx.guild)
+            mod_role = await db.extras.get_mod_role(ctx)
             if mod_role:
                 await send_embed(ctx.channel, f"{mod_role.mention} is the Moderator role.")
             else:
