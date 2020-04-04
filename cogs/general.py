@@ -135,10 +135,6 @@ class General(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print("ready")
-
 
 def setup(bot):
     bot.add_cog(General(bot))
