@@ -18,18 +18,22 @@ class ChannelLogger:
         self.name = name
 
     def log_action(self, command):
+        """Decorator for registering a command that should be logged."""
         command.after_invoke(self.send_command_log)
         return command
 
     async def set_channel(self, ctx, channel):
+        """Set the logging channel."""
         await ctx.bot.database.set_setting(channel.guild, self.name, channel.id)
 
     async def get_channel(self, ctx):
+        """Get the logging channel."""
         channel_id = await ctx.bot.database.get_setting(ctx.guild, self.name)
         if channel_id:
             return ctx.guild.get_channel(int(channel_id))
 
     async def send_command_log(self, cog, ctx):
+        """Send a command log to the log channel."""
         if ctx.command_failed:
             return
 
@@ -39,7 +43,10 @@ class ChannelLogger:
             description=f"[Jump to message]({ctx.message.jump_url})",
             timestamp=datetime.now(),
         )
-        embed.add_field(name="Moderator", value=ctx.author.mention)
+        embed.set_author(
+            name=str(ctx.author),
+            icon_url=ctx.author.avatar_url_as(format="png", static_format="png")
+        )
 
         arg_names = ctx.command.clean_params.keys()
         arg_values = ctx.args[2:] + list(ctx.kwargs.values())
@@ -117,10 +124,27 @@ class PunishmentManager:
                 callback=self.end_punishment,
                 args=(punishment_type, punishment_id, guild, user)
             )
+        
+    async def get_punishment(self, punishment_type, guild, user):
+        """Get a punishment and return the details."""
+        records = await self.infractions.filter(
+            where=DBFilter(
+                type=punishment_type,
+                guild_id=guild.id,
+                member_id=user.id,
+                completed=False,
+                expiry_date__ge=datetime.now()
+            )
+        )
+        if records:
+            return records[0]
+    
+    async def complete_punishment(self, punishment_id):
+        await self.infractions.update_records(where=DBFilter(id=punishment_id), completed=True)
 
     async def end_punishment(self, punishment_type, punishment_id, guild, user):
         """End a punishment and execute any post-punishment callbacks."""
-        await self.infractions.update_records(where=DBFilter(id=punishment_id), completed=True)
+        await self.complete_punishment(punishment_type)
         if punishment_type == "ban":
             await guild.unban(user)
         elif punishment_type == "mute":

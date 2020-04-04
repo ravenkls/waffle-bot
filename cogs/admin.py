@@ -96,7 +96,6 @@ class Admin(commands.Cog):
             for channel in ctx.guild.channels:
                 await channel.set_permissions(role, send_messages=False, speak=False)
 
-
     @modlogger.log_action
     @commands.command()
     async def ban(self, ctx, member: discord.Member, duration: typing.Optional[Duration], *, reason=None):
@@ -114,6 +113,16 @@ class Admin(commands.Cog):
         
         expiry_date = datetime.datetime.now() + duration if duration else None
         await punishments.add_punishment("ban", author=ctx.author, member=member, expiry_date=expiry_date)
+
+    @modlogger.log_action
+    @commands.command()
+    async def unban(self, ctx, user: discord.User, reason=None):
+        """Unban a user from the server."""
+        await ctx.guild.unban(user)
+        await ctx.send(embed=MessageBox.confirmed(f"{user.mention} has been unbanned. Reason: {reason}"))
+        punishment = await punishments.get_punishment("ban", ctx.guild, user)
+        if punishment:
+            await punishments.complete_punishment(punishment["id"])
 
     @modlogger.log_action
     @commands.command()
@@ -162,6 +171,20 @@ class Moderation(commands.Cog):
         expiry_date = datetime.datetime.now() + duration if duration else None
         await punishments.add_punishment("mute", author=ctx.author, member=member, expiry_date=expiry_date)
         await ctx.send(embed=MessageBox.confirmed(f"{member.mention} has been muted. Reason: {reason}"))
+
+    @modlogger.log_action
+    @commands.command()
+    async def unmute(self, ctx, member: discord.Member, reason=None):
+        """Unmute a member of the server."""
+        checks.can_modify_member(ctx, member)
+        mute_role = await db.extras.get_role(self.bot.database, ctx.guild, "mute_role")
+        await member.remove_roles(mute_role)
+
+        await ctx.send(embed=MessageBox.confirmed(f"{member.mention} has been unmuted. Reason: {reason}"))
+        punishment = await punishments.get_punishment("mute", ctx.guild, member)
+        if punishment:
+            await punishments.complete_punishment(punishment["id"])
+        
 
 def setup(bot):
     bot.add_cog(Admin(bot))
