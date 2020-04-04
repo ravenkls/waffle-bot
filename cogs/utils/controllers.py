@@ -66,6 +66,7 @@ class PunishmentManager:
         self.infractions_table = None
 
     async def setup(self, bot):
+        """Setup the punishment manager."""
         self.bot = bot
         self.database = self.bot.database
 
@@ -90,16 +91,15 @@ class PunishmentManager:
         )
         for record in records:
             guild = self.bot.get_guild(int(record["guild_id"]))
-            if record["type"] == "ban":
-                user = discord.Object(id=int(record["member_id"]))
-                guild = self.bot.get_guild(int(record["guild_id"]))
-                delay.start_waiting(
-                    date=record["expiry_date"],
-                    callback=self.end_punishment,
-                    args=(record["type"], record["id"], guild, user)
-                )
+            user = discord.Object(id=int(record["member_id"]))
+            delay.start_waiting(
+                date=record["expiry_date"],
+                callback=self.end_punishment,
+                args=(record["type"], record["id"], guild, user)
+            )
     
     async def add_punishment(self, punishment_type, *, author, member, expiry_date=None):
+        """Add a punishment to the database and start tracking it."""
         punishment_id = await self.infractions.new_record_with_id(
             guild_id=member.guild.id,
             member_id=member.id,
