@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import typing
 
 import discord
 from discord.ext import commands
@@ -8,8 +9,7 @@ from .utils import checks, db, delay
 from .utils.db.database import DBFilter
 from .utils.db.fields import *
 from .utils.logging import ChannelLogger
-from .utils.messages import send_embed, string_to_time
-
+from .utils.messages import send_embed, Duration
 
 modlogger = ChannelLogger("moderation_log")
 
@@ -117,29 +117,30 @@ class Admin(commands.Cog):
 
     @modlogger.log_action
     @commands.command()
-    async def ban(self, ctx, member: discord.Member, *, reason=None):
+    async def ban(self, ctx, member: discord.Member, duration: typing.Optional[Duration] = None, *, reason=None):
         """Ban a member of the server."""
         checks.can_modify_member(ctx, member)
-
-        reason = str(reason)
-        if expiry_date := string_to_time(reason.split()[0]):
-            reason = " ".join(reason.split(" ")[1:]).lstrip()
 
         await member.send(f"🔨 You have been banned from {ctx.guild.name}. Reason: {reason}")
         await member.ban(reason=reason)
         await send_embed(ctx.channel, f"🔨 {member.mention} has been banned. Reason: {reason}")
         
+        if duration:
+            expiry_date = datetime.datetime.now() + duration
+            delay.start_waiting(date=expiry_date, callback=self.unban_user, args=(ctx.guild, member))
+        else:
+            expiry_date = None
+
         await self.infractions.new_record(
             guild_id=ctx.guild.id,
             member_id=member.id,
             author_id=ctx.author.id,
             type="ban",
             issue_date=datetime.datetime.now(),
-            expiry_date=expiry_date
+            expiry_date=expiry_date,
         )
 
-        if expiry_date:
-            delay.start_waiting(date=expiry_date, callback=self.unban_user, args=(ctx.guild, member))
+        
 
 
     async def unban_user(self, guild, user):
