@@ -4,10 +4,27 @@ import datetime
 import re
 
 
-async def send_embed(dest, message):
-    embed = discord.Embed(description=message)
-    return await dest.send(embed=embed)
+class MessageBox(discord.Embed):
+    
+    @classmethod
+    def info(cls, message):
+        return cls(colour=0x3b88c3, description=message)
+    
+    @classmethod
+    def confirmed(cls, message):
+        return cls(colour=0x226699, description=f"☑️    {message}")
 
+    @classmethod
+    def success(cls, message):
+        return cls(colour=0x77b255, description=f"✅    {message}")
+
+    @classmethod
+    def warning(cls, message):
+        return cls(colour=0xffcc4d, description=f"⚠️    {message}")
+
+    @classmethod
+    def critical(cls, message):
+        return cls(colour=0xbe1931, description=f"⛔    {message}")
 
 
 class Duration(commands.Converter):
@@ -33,5 +50,4 @@ class Duration(commands.Converter):
 
         if timedelta.total_seconds() > 0:
             return timedelta
-        else:
-            raise commands.errors.BadArgument("The duration must be entered in the correct format (e.g. 1w2d)")
+        raise commands.errors.BadArgument("The duration must be entered in the correct format (e.g. 1w2d)")

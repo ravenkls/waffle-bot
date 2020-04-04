@@ -74,6 +74,15 @@ class DBQuery:
         return await self.conn.execute(
             f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
         )
+    
+    async def new_record_with_id(self, **kwargs):
+        """Create a new record in a database and return the 'id' value.
+        Note: this only works on tables with a SerialIdentifier field."""
+        fields_sql = ", ".join(kwargs.keys())
+        values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
+        return await self.conn.fetchval(
+            f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql}) RETURNING id;", *kwargs.values()
+        )
 
     async def update_records(self, where: DBFilter = None, **kwargs):
         """Update records in a database table."""
@@ -81,8 +90,6 @@ class DBQuery:
 
         if where:
             where_sql, where_values = where.sql(placeholders_from=len(kwargs)+1)
-            print(f"UPDATE {self.name} SET {updates_sql} {where_sql};")
-            print(list(kwargs.values()) + list(where_values))
             return await self.conn.execute(
                 f"UPDATE {self.name} SET {updates_sql} {where_sql};", *kwargs.values(), *where_values
             )
