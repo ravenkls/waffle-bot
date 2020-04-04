@@ -5,13 +5,24 @@ class Field:
 
     _datatype = None
 
-    def __init__(self, field_name):
+    def __init__(self, field_name, *, default=None):
         self.name = field_name
+        self.default = default
         self.datatype_options = {}
 
     @property
     def datatype(self):
-        return self._datatype.format(**self.datatype_options)
+        dt = self._datatype.format(**self.datatype_options)
+        if self.default:
+            dt += f" DEFAULT {self.default}"
+        return dt
+
+
+class SerialIdentifier(Field):
+    def __init__(self):
+        super().__init__("id")
+
+    _datatype = "SERIAL PRIMARY KEY"
 
 
 class Boolean(Field):

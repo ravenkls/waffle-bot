@@ -8,6 +8,7 @@ import humanize
 class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.emoji = ""
         self.bot.remove_command("help")
         self.start_time = datetime.datetime.now()
 
@@ -38,10 +39,10 @@ class General(commands.Cog):
             for name, cog in self.bot.cogs.items():
                 cog_commands = [c for c in cog.get_commands() if not c.hidden]
                 if cog_commands:
-                    commands_list = ", ".join(
+                    commands_list = "\n".join(
                         [f"`{self.bot.command_prefix}{cc.name}`" for cc in cog_commands]
                     )
-                    embed.add_field(name=name, value=commands_list, inline=False)
+                    embed.add_field(name=name + "  " + cog.emoji, value=commands_list)
 
         elif command := self.bot.get_command(command):
             embed = discord.Embed(

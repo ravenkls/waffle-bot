@@ -26,7 +26,11 @@ class ChannelLogger:
             return
 
         channel = await self.get_channel(ctx)
-        embed = discord.Embed(title=ctx.command.name, timestamp=datetime.now())
+        embed = discord.Embed(
+            title=ctx.bot.command_prefix + ctx.command.name,
+            description=f"[Jump to message]({ctx.message.jump_url})",
+            timestamp=datetime.now(),
+        )
         embed.add_field(name="Moderator", value=ctx.author.mention)
 
         arg_names = ctx.command.clean_params.keys()

@@ -8,30 +8,43 @@ class DBFilter:
 
     def __init__(self, **kwargs):
         self.filter_kwargs = kwargs
-        self.filter_sql = self._process_filters()
 
-    def _process_filters(self):
+    def sql(self, placeholders_from=1):
         filters = []
-        for field_name, value in self.filter_kwargs.items():
+        values = list(self.filter_kwargs.values())
+        removes = []
+
+        for num, field_name in enumerate(self.filter_kwargs.keys(), start=placeholders_from):
+            n = num - len(removes)
+            i = num - placeholders_from
             if field_name.endswith("__in"):
-                filters.append(f"{field_name[:-4]} IN {tuple(value)!r}")
+                filters.append(f"{field_name[:-4]} IN ${n}")
             elif field_name.endswith("__gt"):
-                filters.append(f"{field_name[:-4:]} > {value!r}")
+                filters.append(f"{field_name[:-4:]} > ${n}")
             elif field_name.endswith("__ge"):
-                filters.append(f"{field_name[:-4:]} >= {value!r}")
+                filters.append(f"{field_name[:-4:]} >= ${n}")
             elif field_name.endswith("__lt"):
-                filters.append(f"{field_name[:-4:]} < {value!r}")
+                filters.append(f"{field_name[:-4:]} < ${n}")
             elif field_name.endswith("__le"):
-                filters.append(f"{field_name[:-4:]} <= {value!r}")
+                filters.append(f"{field_name[:-4:]} <= ${n}")
             elif field_name.endswith("__lt"):
-                filters.append(f"{field_name[:-4:]} < {value!r}")
+                filters.append(f"{field_name[:-4:]} < ${n}")
+            elif field_name.endswith("__ne"):
+                if values[i] is None:
+                    filters.append(f"{field_name[:-4:]} IS NOT NULL")
+                    removes.append(i)
+                else:
+                    filters.append(f"{field_name[:-4:]} != ${n}")
             else:
-                filters.append(f"{field_name} = {value!r}")
+                if values[i] is None:
+                    filters.append(f"{field_name} IS NULL")
+                    removes.append(i)
+                else:
+                    filters.append(f"{field_name} = ${n}")
 
-        return " AND ".join(filters)
+        values = [v for n, v in enumerate(values) if n not in removes]
 
-    def __str__(self):
-        return "WHERE " + self.filter_sql
+        return "WHERE " + " AND ".join(filters), values
 
 
 class DBQuery:
@@ -50,44 +63,46 @@ class DBQuery:
     async def filter(self, where: DBFilter, limit=None):
         """Get records in the table based on a filter."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
-        records = await self.conn.fetch(f"SELECT * FROM {self.name} {where} {limit_sql};")
+        where_sql, where_values = where.sql()
+        records = await self.conn.fetch(f"SELECT * FROM {self.name} {where_sql} {limit_sql};", *where_values)
         return records
 
     async def new_record(self, **kwargs):
         """Create a new record in a database."""
         fields_sql = ", ".join(kwargs.keys())
-        values_sql = ", ".join(map(repr, kwargs.values()))
+        values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
         return await self.conn.execute(
-            f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});"
+            f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
         )
 
-    async def update_records(self, where: DBFilter = None, raw_sql=False, **kwargs):
+    async def update_records(self, where: DBFilter = None, **kwargs):
         """Update records in a database table."""
-        if raw_sql:
-            updates_sql = ", ".join([f"{field}={value}" for field, value in kwargs.items()])
-        else:
-            updates_sql = ", ".join([f"{field}={value!r}" for field, value in kwargs.items()])
+        updates_sql = ", ".join([f"{field}=${n}" for n, field in enumerate(kwargs.keys(), start=1)])
 
         if where:
+            where_sql, where_values = where.sql(placeholders_from=len(kwargs)+1)
+            print(f"UPDATE {self.name} SET {updates_sql} {where_sql};")
+            print(list(kwargs.values()) + list(where_values))
             return await self.conn.execute(
-                "UPDATE {self.name} SET {updates_sql} {where};"
+                f"UPDATE {self.name} SET {updates_sql} {where_sql};", *kwargs.values(), *where_values
             )
         else:
-            return await self.conn.execute("UPDATE {self.name} SET {updates_sql};")
+            return await self.conn.execute(f"UPDATE {self.name} SET {updates_sql};", *kwargs.values())
 
     async def delete_records(self, *, where: DBFilter = None):
         """Delete records in a database table."""
         if where:
-            return await self.conn.execute("DELETE FROM {self.name} {where};")
+            where_sql, where_values = where.sql()
+            return await self.conn.execute(f"DELETE FROM {self.name} {where_sql};", *where_values)
         else:
-            return await self.conn.execute("DELETE FROM {self.name};")
+            return await self.conn.execute(f"DELETE FROM {self.name};")
 
 
 class Database:
     """Allows you to interact with a postgresql database
     easily and asyncronously."""
 
-    settings_table = "server_settings"
+    settings_table = "server_setting"
 
     def __init__(self, url, ssl=False):
         self.url = url + ("?sslmode=require" if ssl else "")
@@ -113,6 +128,7 @@ class Database:
     async def new_table(self, name, fields):
         fields = ", ".join([f'"{f.name}" {f.datatype}' for f in fields])
         await self.conn.execute(f"CREATE TABLE IF NOT EXISTS {name} ({fields});")
+        return self.table(name)
 
     def table(self, name):
         return DBQuery(self.conn, name)

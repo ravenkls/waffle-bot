@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from .exceptions import ModifyMemberError
+from .exceptions import ModifyMemberError, BotHasLowRankError
 
 
 def can_modify_member(ctx, member):
@@ -11,4 +11,4 @@ def can_modify_member(ctx, member):
     if ctx.author.top_role <= member.top_role and ctx.author != ctx.guild.owner:
         raise ModifyMemberError()
     elif ctx.me.top_role <= member.top_role:
-        raise commands.errors.BotMissingPermissions([])
+        raise BotHasLowRankError()
