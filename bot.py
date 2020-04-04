@@ -18,6 +18,7 @@ class WaffleBot(commands.Bot):
     async def on_ready(self):
         self.logger.info("Bot is ready and accepting commands.")
 
+
 if __name__ == "__main__":
     with open("token.txt") as f:
         token = f.read().strip()
