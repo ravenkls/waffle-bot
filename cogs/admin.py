@@ -91,7 +91,7 @@ class Admin(commands.Cog):
         await ctx.send("done")
 
     @commands.guild_only()
-    @commands.check(check.is_guild_owner)
+    @commands.check(checks.is_guild_owner)
     @commands.command()
     async def adminrole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
         """Display or set the Administrator role."""
