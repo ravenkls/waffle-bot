@@ -19,10 +19,10 @@ class Field:
 
 
 class SerialIdentifier(Field):
+    _datatype = "SERIAL PRIMARY KEY"
+
     def __init__(self):
         super().__init__("id")
-
-    _datatype = "SERIAL PRIMARY KEY"
 
 
 class Boolean(Field):
