@@ -117,6 +117,9 @@ class General(commands.Cog):
 
         embed = discord.Embed(colour=0xC42929, description=str(exception))
 
+        if isinstance(exception, commands.errors.CheckFailure):
+            return
+
         if message := responses.get(type(exception)):
             embed.description = message
             return await ctx.send(embed=embed)

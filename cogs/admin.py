@@ -47,7 +47,10 @@ class Admin(commands.Cog):
 
         admin_role = await db.extras.get_admin_role(ctx)
         if admin_role:
-            return ctx.author.top_role >= admin_role
+            if ctx.author.top_role >= admin_role:
+                return True
+            else:
+                await ctx.send("You are not an Administrator.")
 
     @commands.guild_only()
     @commands.command()
@@ -68,7 +71,6 @@ class Admin(commands.Cog):
 
     @commands.guild_only()
     @commands.command()
-    @commands.is_owner()
     async def adminrole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
         """Display or set the Administrator role."""
         if role is None:
@@ -263,7 +265,10 @@ class Moderation(commands.Cog):
 
         mod_role = await db.extras.get_mod_role(ctx)
         if mod_role:
-            return ctx.author.top_role >= mod_role
+            if ctx.author.top_role >= mod_role:
+                return True
+            else:
+                await ctx.send("You are not a Moderator.")
 
     @modlogger.log_action
     @commands.guild_only()
@@ -275,6 +280,7 @@ class Moderation(commands.Cog):
         await ctx.send(embed=MessageBox.success(f"{member.mention} has been warned. Reason: {reason}"))
 
     @commands.guild_only()
+    @commands.check(checks.is_guild_owner)
     @commands.command(aliases=["warns", "warnings"])
     async def infractions(self, ctx, member: discord.Member, page: int = 1):
         """View all the infractions that a member has been given."""

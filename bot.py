@@ -6,7 +6,7 @@ import logging
 
 class WaffleBot(commands.Bot):
     def __init__(self, database_url):
-        super().__init__(command_prefix="?")
+        super().__init__(command_prefix=">")
         self.database_url = database_url
         self.database = Database(self.database_url)
         self.load_extension("cogs.general")

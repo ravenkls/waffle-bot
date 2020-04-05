@@ -23,3 +23,10 @@ def can_modify_role(ctx, role):
         raise CantModifyError()
     elif ctx.me.top_role <= role:
         raise BotHasLowRankError()
+
+
+async def is_guild_owner(ctx):
+    if ctx.author == ctx.guild.owner:
+        return True
+    else:
+        await ctx.send("Only the server owner can run this command.")
