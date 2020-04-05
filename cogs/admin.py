@@ -69,6 +69,27 @@ class Admin(commands.Cog):
             await modlogger.set_channel(ctx, None)
             await ctx.send(embed=MessageBox.confirmed("The moderation log channel has been reset"))
 
+    @commands.is_owner()
+    @commands.command()
+    async def load_warnings(self, ctx):
+        import json
+        with open("warnings.json") as f:
+            warnings = json.load(f)
+        
+        await ctx.send("okay mate im doing it!!!!")
+        for m_id, a_id, reason, timestamp in warnings["values"]:
+            timestamp = datetime.datetime.fromtimestamp(timestamp/100)
+            await punishments.infractions.new_record_with_id(
+                guild_id=ctx.guild.id,
+                member_id=m_id,
+                author_id=a_id,
+                type="warn",
+                reason=reason,
+                issue_date=timestamp,
+                expiry_date=None,
+            )
+        await ctx.send("done")
+
     @commands.guild_only()
     @commands.command()
     async def adminrole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
