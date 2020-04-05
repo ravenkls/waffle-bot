@@ -71,11 +71,11 @@ class General(commands.Cog):
         """Displays information about a user."""
         now = datetime.datetime.now()
 
-        join_date = humanize.naturalday(member.joined_at)
+        join_date = member.joined_at.strftime("%d %B %Y")
         join_ago = (now - member.joined_at).days
 
-        creation_date = humanize.naturalday(member.created_at)
-        creation_ago = (now - member.joined_at).days
+        creation_date = member.created_at.strftime("%d %B %Y")
+        creation_ago = (now - member.created_at).days
 
         embed = discord.Embed(title="User Details", description=member.mention)
         embed.set_author(
