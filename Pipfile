@@ -17,7 +17,6 @@ python_version = "3.8"
 
 [scripts]
 start = "python bot.py"
-format = "autopep8 --in-place --max-line-length 120 --recursive ."
 
 [pipenv]
 allow_prereleases = true
