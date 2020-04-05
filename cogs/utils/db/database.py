@@ -137,9 +137,13 @@ class Database:
             return records[0]["value"]
 
     async def set_setting(self, guild, key, value):
-        await self.table(self.settings_table).new_record(
-            guild_id=guild.id, key=str(key), value=str(value)
+        await self.table(self.settings_table).delete_records(
+            where=DBFilter(guild_id=guild.id, key=str(key))
         )
+        if value is not None:
+            await self.table(self.settings_table).new_record(
+                guild_id=guild.id, key=str(key), value=str(value)
+            )
 
     async def new_table(self, name, fields):
         fields = ", ".join([f'"{f.name}" {f.datatype}' for f in fields])

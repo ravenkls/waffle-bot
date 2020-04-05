@@ -6,8 +6,9 @@ import logging
 
 class WaffleBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="?")
-        self.database = Database("postgres://postgres:pass@127.0.0.1:5432/wafflebot")
+        super().__init__(command_prefix="?", database_url)
+        self.database_url = database_url
+        self.database = Database(self.database_url)
         self.load_extension("cogs.general")
         self.load_extension("cogs.admin")
         self.logger = logging.getLogger(__name__)
@@ -22,7 +23,9 @@ class WaffleBot(commands.Bot):
 if __name__ == "__main__":
     with open("token.txt") as f:
         token = f.read().strip()
+    with open("database_creds.txt") as f:
+        database_url = f.read().strip()
 
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] [%(name)s] %(message)s")
-    bot = WaffleBot()
+    bot = WaffleBot(database_url)
     bot.run(token)

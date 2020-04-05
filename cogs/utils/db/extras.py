@@ -7,7 +7,10 @@ async def get_role(database, guild, name):
 
 
 async def set_role(database, guild, name, role):
-    await database.set_setting(guild, name, role.id)
+    if role is not None:
+        await database.set_setting(guild, name, role.id)
+    else:
+        await database.set_setting(guild, name, None)
 
 
 async def get_admin_role(ctx):

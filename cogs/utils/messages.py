@@ -26,6 +26,10 @@ class MessageBox(discord.Embed):
     def critical(cls, message):
         return cls(colour=0xbe1931, description=f"⛔    {message}")
 
+    @classmethod
+    def loading(cls, message):
+        return cls(colour=0xfeac33, description=f"⌛     {message}")
+
 
 class Duration(commands.Converter):
 
@@ -51,3 +55,12 @@ class Duration(commands.Converter):
         if timedelta.total_seconds() > 0:
             return timedelta
         raise commands.errors.BadArgument("The duration must be entered in the correct format (e.g. 1w2d)")
+
+
+class NegativeBoolean(commands.Converter):
+
+    async def convert(self, ctx, argument):
+        """Converts a negative argument into a False boolean."""
+        if str(argument).lower() in ("off", "disable", "false"):
+            return False
+        raise commands.errors.BadArgument("A negative boolean should either be `off`, `disable` or `false`.")

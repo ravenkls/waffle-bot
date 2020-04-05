@@ -24,7 +24,10 @@ class ChannelLogger:
 
     async def set_channel(self, ctx, channel):
         """Set the logging channel."""
-        await ctx.bot.database.set_setting(channel.guild, self.name, channel.id)
+        if channel is not None:
+            await ctx.bot.database.set_setting(ctx.guild, self.name, channel.id)
+        else:
+            await ctx.bot.database.set_setting(ctx.guild, self.name, None)
 
     async def get_channel(self, ctx):
         """Get the logging channel."""

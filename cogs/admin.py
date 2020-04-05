@@ -10,7 +10,7 @@ from .utils import checks, db
 from .utils.db.database import DBFilter
 from .utils.db.fields import *
 from .utils.controllers import ChannelLogger, PunishmentManager
-from .utils.messages import MessageBox, Duration
+from .utils.messages import MessageBox, Duration, NegativeBoolean
 
 
 modlogger = ChannelLogger("moderation_log")
@@ -51,7 +51,7 @@ class Admin(commands.Cog):
 
     @commands.guild_only()
     @commands.command()
-    async def modlog(self, ctx, channel: discord.TextChannel = None):
+    async def modlog(self, ctx, channel: typing.Union[discord.TextChannel, NegativeBoolean] = None):
         """Set the channel to send mod logs to."""
         if channel is None:
             channel = await modlogger.get_channel(ctx)
@@ -59,14 +59,17 @@ class Admin(commands.Cog):
                 await ctx.send(embed=MessageBox.warning("You have not set a moderation log channel yet on this server!"))
             else:
                 await ctx.send(embed=MessageBox.info(f"{channel.mention} is the moderation log channel."))
-        else:
+        elif isinstance(channel, discord.TextChannel):
             await modlogger.set_channel(ctx, channel)
             await ctx.send(embed=MessageBox.confirmed(f"{channel.mention} is now the moderation log."))
+        elif channel is False:
+            await modlogger.set_channel(ctx, None)
+            await ctx.send(embed=MessageBox.confirmed("The moderation log channel has been reset"))
 
     @commands.guild_only()
     @commands.command()
     @commands.is_owner()
-    async def adminrole(self, ctx, role: discord.Role = None):
+    async def adminrole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
         """Display or set the Administrator role."""
         if role is None:
             admin_role = await db.extras.get_admin_role(ctx)
@@ -74,13 +77,16 @@ class Admin(commands.Cog):
                 await ctx.send(embed=MessageBox.info(f"{admin_role.mention} is the Administrator role."))
             else:
                 await ctx.send(embed=MessageBox.warning("You have not set an Administrator role."))
-        else:
+        elif isinstance(role, discord.Role):
             await db.extras.set_admin_role(ctx, role)
             await ctx.send(embed=MessageBox.confirmed(f"{role.mention} is now the Administrator role."))
+        elif role is False:
+            await db.extras.set_admin_role(ctx, None)
+            await ctx.send(embed=MessageBox.confirmed("The Administrator role has been reset."))
 
     @commands.guild_only()
     @commands.command()
-    async def modrole(self, ctx, role: discord.Role = None):
+    async def modrole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
         """Display or set the Moderator role."""
         if role is None:
             mod_role = await db.extras.get_mod_role(ctx)
@@ -88,13 +94,16 @@ class Admin(commands.Cog):
                 await ctx.send(embed=MessageBox.info(f"{mod_role.mention} is the Moderator role."))
             else:
                 await ctx.send(embed=MessageBox.warning(f"You have not set an Moderator role."))
-        else:
+        elif isinstance(role, discord.Role):
             await db.extras.set_mod_role(ctx, role)
             await ctx.send(embed=MessageBox.confirmed(f"{role.mention} is now the Moderator role."))
+        elif role is False:
+            await db.extras.set_mod_role(ctx, None)
+            await ctx.send(embed=MessageBox.confirmed("The Moderation role has been reset."))
 
     @commands.guild_only()
     @commands.command()
-    async def muterole(self, ctx, role: discord.Role = None):
+    async def muterole(self, ctx, role: typing.Union[discord.Role, NegativeBoolean] = None):
         """Display or set the Mute role."""
         if role is None:
             mute_role = await db.extras.get_role(self.bot.database, ctx.guild, "mute_role")
@@ -102,12 +111,49 @@ class Admin(commands.Cog):
                 await ctx.send(embed=MessageBox.info(f"{mute_role.mention} is the Mute role."))
             else:
                 await ctx.send(embed=MessageBox.warning(f"You have not set an Mute role."))
-        else:
+        elif isinstance(role, discord.Role):
             await db.extras.set_role(self.bot.database, ctx.guild, "mute_role", role)
             await ctx.send(embed=MessageBox.confirmed(f"{role.mention} is now the Mute role."))
 
             for channel in ctx.guild.channels:
                 await channel.set_permissions(role, send_messages=False, speak=False)
+        elif role is False:
+            mute_role = await db.extras.get_role(self.bot.database, ctx.guild, "mute_role")
+            message = await ctx.send(embed=MessageBox.loading("Cleaning up Mute role permissions."))
+            if mute_role:
+                for channel in ctx.guild.channels:
+                    await channel.set_permissions(mute_role, send_messages=None, speak=None)
+            await db.extras.set_role(self.bot.database, ctx.guild, "mute_role", None)
+            await message.edit(embed=MessageBox.confirmed("The Mute role has been reset."))
+
+    @commands.guild_only()
+    @commands.command()
+    async def roles(self, ctx, action, current_role: discord.Role, roles: commands.Greedy[discord.Role]):
+        """Manage server roles.
+
+        Examples:
+        `roles add Moderator Admin` Gives everyone with the Moderator role the Admin role
+        `roles remove everyone Moderator` Removes the Moderator role from everyone
+        `roles switch Moderator Admin` Moves all Moderators to the Admin role"""
+        checks.can_modify_role(ctx, current_role)
+        [checks.can_modify_role(ctx, r) for r in roles]
+        role_mentions = " and ".join([r.mention for r in roles])
+        if action.lower() == "add":
+            message = await ctx.send(embed=MessageBox.loading(f"Adding {role_mentions} to members with the {current_role} role."))
+            for m in current_role.members:
+                await m.add_roles(*roles)
+        elif action.lower() == "remove":
+            message = await ctx.send(embed=MessageBox.loading(f"Removing {role_mentions} from members with the {current_role} role."))
+            for m in current_role.members:
+                await m.remove_roles(*roles)
+        elif action.lower() == "switch":
+            message = await ctx.send(embed=MessageBox.loading(f"Adding {role_mentions} from members with the {current_role} role and removing their {current_role} role."))
+            for m in current_role.members:
+                await m.add_roles(*roles)
+                await m.remove_roles(current_role)
+        else:
+            raise commands.errors.BadArgument('The "action" parameter must be one of `add`, `remove`, or `switch`.')
+        await message.edit(embed=MessageBox.success("Roles have been changed successfully."))
 
     @modlogger.log_action
     @commands.guild_only()
