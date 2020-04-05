@@ -119,6 +119,8 @@ class General(commands.Cog):
 
         if isinstance(exception, commands.errors.CheckFailure):
             return
+        elif isinstance(exception, commands.errors.CommandNotFound):
+            return
 
         if message := responses.get(type(exception)):
             embed.description = message
