@@ -42,7 +42,7 @@ class Duration(commands.Converter):
         
         timedelta = datetime.timedelta( 
             weeks=times[1], 
-            days=times[2] + times[0],
+            days=times[2] + times[0] * 365,
             hours=times[3], 
             minutes=times[4], 
             seconds=times[5]

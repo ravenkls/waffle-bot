@@ -85,6 +85,7 @@ class PunishmentManager:
                 BigInteger("member_id"),
                 BigInteger("author_id"),
                 Text("type"),
+                Text("reason"),
                 Timestamp("issue_date"),
                 Timestamp("expiry_date"),
                 Boolean("completed", default="FALSE"),
@@ -105,19 +106,20 @@ class PunishmentManager:
                 args=(record["type"], record["id"], guild, user)
             )
     
-    async def add_punishment(self, punishment_type, *, author, member, expiry_date=None):
+    async def add_punishment(self, punishment_type, *, author, user, reason, expiry_date=None):
         """Add a punishment to the database and start tracking it."""
         punishment_id = await self.infractions.new_record_with_id(
-            guild_id=member.guild.id,
-            member_id=member.id,
+            guild_id=author.guild.id,
+            member_id=user.id,
             author_id=author.id,
             type=punishment_type,
+            reason=reason,
             issue_date=datetime.now(),
             expiry_date=expiry_date,
         )
 
         if expiry_date:
-            user = discord.Object(id=member.id)
+            user = discord.Object(id=user.id)
             guild = member.guild
             delay.start_waiting(
                 date=expiry_date,
@@ -144,7 +146,7 @@ class PunishmentManager:
 
     async def end_punishment(self, punishment_type, punishment_id, guild, user):
         """End a punishment and execute any post-punishment callbacks."""
-        await self.complete_punishment(punishment_type)
+        await self.complete_punishment(punishment_id)
         if punishment_type == "ban":
             await guild.unban(user)
         elif punishment_type == "mute":
