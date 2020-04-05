@@ -8,7 +8,7 @@ async def _wait_until(date, callback, args=None, kwargs=None):
 
     args = () if args is None else args
     kwargs = {} if kwargs is None else kwargs
-    
+
     if asyncio.iscoroutinefunction(callback):
         await callback(*args, **kwargs)
     else:

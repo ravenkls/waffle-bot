@@ -1,6 +1,7 @@
 import asyncio
 import asyncpg
 from .fields import *
+from collections import defaultdict
 
 
 class DBFilter:
@@ -10,7 +11,7 @@ class DBFilter:
         self.filter_kwargs = kwargs
 
     def sql(self, placeholders_from=1):
-        filters = []
+        conditions = defaultdict(list)
         values = list(self.filter_kwargs.values())
         removes = []
 
@@ -18,29 +19,37 @@ class DBFilter:
             n = num - len(removes)
             i = num - placeholders_from
             if field_name.endswith("__in"):
-                filters.append(f"{field_name[:-4]} IN ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4]} IN ${n}")
             elif field_name.endswith("__gt"):
-                filters.append(f"{field_name[:-4:]} > ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4:]} > ${n}")
             elif field_name.endswith("__ge"):
-                filters.append(f"{field_name[:-4:]} >= ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4:]} >= ${n}")
             elif field_name.endswith("__lt"):
-                filters.append(f"{field_name[:-4:]} < ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4:]} < ${n}")
             elif field_name.endswith("__le"):
-                filters.append(f"{field_name[:-4:]} <= ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4:]} <= ${n}")
             elif field_name.endswith("__lt"):
-                filters.append(f"{field_name[:-4:]} < ${n}")
+                conditions[field_name[:-4]].append(f"{field_name[:-4:]} < ${n}")
             elif field_name.endswith("__ne"):
                 if values[i] is None:
-                    filters.append(f"{field_name[:-4:]} IS NOT NULL")
+                    conditions[field_name[:-4]].append(f"{field_name[:-4:]} IS NOT NULL")
                     removes.append(i)
                 else:
-                    filters.append(f"{field_name[:-4:]} != ${n}")
+                    conditions[field_name[:-4]].append(f"{field_name[:-4:]} != ${n}")
             else:
                 if values[i] is None:
-                    filters.append(f"{field_name} IS NULL")
+                    conditions[field_name].append(f"{field_name} IS NULL")
                     removes.append(i)
                 else:
-                    filters.append(f"{field_name} = ${n}")
+                    conditions[field_name].append(f"{field_name} = ${n}")
+
+        filters = []
+        for field, conds in conditions.items():
+            if len(conds) > 1:
+                cond = "(" + " OR ".join(conds) + ")"
+            else:
+                cond = conds[0]
+            filters.append(cond)
 
         values = [v for n, v in enumerate(values) if n not in removes]
 
@@ -74,7 +83,7 @@ class DBQuery:
         return await self.conn.execute(
             f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
         )
-    
+
     async def new_record_with_id(self, **kwargs):
         """Create a new record in a database and return the 'id' value.
         Note: this only works on tables with a SerialIdentifier field."""

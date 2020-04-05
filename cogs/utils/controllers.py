@@ -105,7 +105,7 @@ class PunishmentManager:
                 callback=self.end_punishment,
                 args=(record["type"], record["id"], guild, user)
             )
-    
+
     async def add_punishment(self, punishment_type, *, author, user, reason, expiry_date=None):
         """Add a punishment to the database and start tracking it."""
         punishment_id = await self.infractions.new_record_with_id(
@@ -120,13 +120,13 @@ class PunishmentManager:
 
         if expiry_date:
             user = discord.Object(id=user.id)
-            guild = member.guild
+            guild = author.guild
             delay.start_waiting(
                 date=expiry_date,
                 callback=self.end_punishment,
                 args=(punishment_type, punishment_id, guild, user)
             )
-        
+
     async def get_punishment(self, punishment_type, guild, user):
         """Get a punishment and return the details."""
         records = await self.infractions.filter(
@@ -135,12 +135,13 @@ class PunishmentManager:
                 guild_id=guild.id,
                 member_id=user.id,
                 completed=False,
-                expiry_date__ge=datetime.now()
+                expiry_date=None,
+                expiry_date__gt=datetime.now(),
             )
         )
         if records:
             return records[0]
-    
+
     async def complete_punishment(self, punishment_id):
         await self.infractions.update_records(where=DBFilter(id=punishment_id), completed=True)
 

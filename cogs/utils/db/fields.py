@@ -35,7 +35,7 @@ class Char(Field):
     def __init__(self, field_name, length, **kwargs):
         super().__init__(field_name, **kwargs)
         self.datatype_options = {"n": length}
-    
+
 
 class Varchar(Field):
     _datatype = "VARCHAR({n})"

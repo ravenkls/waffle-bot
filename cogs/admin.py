@@ -26,12 +26,20 @@ class Admin(commands.Cog):
     async def on_ready(self):
         await punishments.setup(self.bot)
         await punishments.start_tracking()
-    
+
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel):
         mute_role = await db.extras.get_role(self.bot.database, channel.guild, "mute_role")
         if mute_role:
             await channel.set_permissions(mute_role, send_messages=False, speak=False)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        punishment = await punishments.get_punishment("mute", member.guild, member)
+        if punishment:
+            mute_role = await db.extras.get_role(self.bot.database, member.guild, "mute_role")
+            if mute_role:
+                await member.add_roles(mute_role)
 
     async def cog_check(self, ctx):
         if ctx.author == ctx.guild.owner:
@@ -66,7 +74,7 @@ class Admin(commands.Cog):
                 await ctx.send(embed=MessageBox.info(f"{admin_role.mention} is the Administrator role."))
             else:
                 await ctx.send(embed=MessageBox.warning("You have not set an Administrator role."))
-        else: 
+        else:
             await db.extras.set_admin_role(ctx, role)
             await ctx.send(embed=MessageBox.confirmed(f"{role.mention} is now the Administrator role."))
 
@@ -106,7 +114,7 @@ class Admin(commands.Cog):
     @commands.command()
     async def ban(self, ctx, member: typing.Union[discord.Member, int], duration: typing.Optional[Duration], *, reason=None):
         """Ban a member of the server.
-        
+
         Examples:
         `ban Kristian` Bans the user 'Kristian' indefinitely
         `ban Kristian 5w2d10m` Bans the user 'Kristian' for 5 weeks, 2 days and 10 minutes
@@ -117,12 +125,12 @@ class Admin(commands.Cog):
             await member.send(f"🔨 You have been banned from {ctx.guild.name}. Reason: {reason}")
         else:
             member = discord.Object(id=member)
-        
+
         try:
             await ctx.guild.ban(member, reason=reason)
         except discord.errors.NotFound:
             raise commands.errors.BadArgument(f'User "{member.id}" not found')
-        
+
         member_name = member.mention if isinstance(member, discord.Member) else f"User with ID {member.id}"
         await ctx.send(embed=MessageBox.success(f"{member_name} has been banned. Reason {reason}"))
 
@@ -210,7 +218,7 @@ class Moderation(commands.Cog):
         mod_role = await db.extras.get_mod_role(ctx)
         if mod_role:
             return ctx.author.top_role >= mod_role
-    
+
     @modlogger.log_action
     @commands.guild_only()
     @commands.command()
@@ -229,7 +237,7 @@ class Moderation(commands.Cog):
         )
         if not infractions:
             return await ctx.send(embed=MessageBox.info(f"{member.mention} has no previous infractions."))
-        
+
         pages = (len(infractions) - 1) // 20 + 1
         page = max(min(pages, page), 1)
 
@@ -284,7 +292,8 @@ class Moderation(commands.Cog):
         embed.add_field(name="Given by", value=author.mention)
         embed.add_field(name="Reason", value=infraction["reason"])
         embed.add_field(name="Issue Date", value=infraction["issue_date"])
-        if expiry_date := infraction["expiry_date"]:
+        if expiry_date:
+            = infraction["expiry_date"]:
             embed.add_field(name="Expiry Date", value=expiry_date)
 
         await ctx.send(embed=embed)
@@ -294,7 +303,7 @@ class Moderation(commands.Cog):
     @commands.command()
     async def mute(self, ctx, member: discord.Member, duration: typing.Optional[Duration], *, reason=None):
         """Mute a member of the server.
-        
+
         Examples:
         `mute Kristian` Mutes the user 'Kristian' indefinitely
         `mute Kristian 5w2d10m` Mutes the user 'Kristian' for 5 weeks, 2 days and 10 minutes
@@ -307,7 +316,7 @@ class Moderation(commands.Cog):
         await punishments.add_punishment(
             "mute",
             author=ctx.author,
-            user=member, 
+            user=member,
             reason=str(reason),
             expiry_date=expiry_date
         )
@@ -326,7 +335,7 @@ class Moderation(commands.Cog):
         punishment = await punishments.get_punishment("mute", ctx.guild, member)
         if punishment:
             await punishments.complete_punishment(punishment["id"])
-        
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))
