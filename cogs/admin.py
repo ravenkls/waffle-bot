@@ -241,7 +241,6 @@ class Admin(commands.Cog):
             raise commands.errors.CommandError("This channel is already unlocked.")
 
     @commands.guild_only()
-    @modlogger.log_action
     @commands.command(aliases=["purge", "clear", "cls"])
     async def clean(self, ctx, amount=10):
         await ctx.message.delete()
