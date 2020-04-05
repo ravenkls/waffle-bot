@@ -44,8 +44,7 @@ class General(commands.Cog):
                     )
                     embed.add_field(name=name + "  " + cog.emoji, value=commands_list)
 
-        elif command:
-            = self.bot.get_command(command):
+        elif command := self.bot.get_command(command):
             embed = discord.Embed(
                 title=self.bot.command_prefix + command.name,
                 description=command.callback.__doc__,
@@ -118,8 +117,7 @@ class General(commands.Cog):
 
         embed = discord.Embed(colour=0xC42929, description=str(exception))
 
-        if message:
-            = responses.get(type(exception)):
+        if message := responses.get(type(exception)):
             embed.description = message
             return await ctx.send(embed=embed)
         elif isinstance(exception, commands.errors.MissingRequiredArgument):

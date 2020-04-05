@@ -292,8 +292,7 @@ class Moderation(commands.Cog):
         embed.add_field(name="Given by", value=author.mention)
         embed.add_field(name="Reason", value=infraction["reason"])
         embed.add_field(name="Issue Date", value=infraction["issue_date"])
-        if expiry_date:
-            = infraction["expiry_date"]:
+        if expiry_date := infraction["expiry_date"]:
             embed.add_field(name="Expiry Date", value=expiry_date)
 
         await ctx.send(embed=embed)
