@@ -62,23 +62,9 @@ class Reputation(commands.Cog):
         embed = discord.Embed(colour=0xffb636)
         embed.set_author(name="Reputation Leaderboard", icon_url="https://i.imgur.com/wreHU7E.png")
         for member, reps in top10:
-            embed.add_field(name=member.display_name, value=reps)
+            embed.add_field(name=member.display_name, value=reps, inline=False)
         await ctx.send(embed=embed)
 
-    @commands.is_owner()
-    @commands.command()
-    async def transfer_reps(self, ctx):
-        import json
-        with open("reps.json") as f:
-            data = json.load(f)
-        
-        for member_id, reps in data["values"]:
-            await self.reputation.new_record(
-                guild_id=666294363696922639,
-                member_id=member_id,
-                points=reps,
-            )
-        await ctx.send("done")
 
 def setup(bot):
     bot.add_cog(Reputation(bot))
