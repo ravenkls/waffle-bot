@@ -143,7 +143,7 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def deadchannels(self, ctx):
+    async def deadchannels(self, ctx, limit=10):
         """Returns the top 10 channels which are most dead in the server."""
         message = await ctx.send(embed=MessageBox.loading("Gathering channel data."))
         channels = []
@@ -154,7 +154,7 @@ class General(commands.Cog):
                     channels.append((ch, last_message[0].created_at))
                 else:
                     channels.append((ch, datetime.datetime(1990, 1, 1)))
-        dead_channels = list(sorted(channels, key=lambda x: x[1]))[:10]
+        dead_channels = list(sorted(channels, key=lambda x: x[1]))[:limit]
         msg = "\n".join([f"{n}. {ch[0].mention}" for n, ch in enumerate(dead_channels, start=1)])
         await message.edit(embed=MessageBox.info(msg))
 
