@@ -44,7 +44,7 @@ class Reputation(commands.Cog):
         
         await ctx.send(embed=MessageBox.success(f"{member.mention} now has `{reps}` reputation points."))
 
-    @commands.command()
+    @commands.command(aliases=["lb"])
     async def leaderboard(self, ctx):
         """Displays the server reputation leaderboard."""
         scores = await self.reputation.filter(
