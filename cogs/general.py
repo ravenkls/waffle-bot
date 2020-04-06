@@ -67,7 +67,7 @@ class General(commands.Cog):
     async def update(self, ctx):
         """Get the latest from the git repository."""
         message = await ctx.send(embed=MessageBox.loading("Checking GitHub for updates."))
-        out = subprocess.run("git pull", capture_output=True)
+        out = subprocess.run("git pull", capture_output=True, shell=True)
         status = out.stdout.decode().strip().split("\n")
         if status == "Already up to date.":
             await message.edit(embed=MessageBox.confirmed(status))
