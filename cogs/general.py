@@ -70,9 +70,9 @@ class General(commands.Cog):
         out = subprocess.run("git pull", capture_output=True, shell=True)
         status = out.stdout.decode().strip().split("\n")[-1]
         if status == "Already up to date.":
-            await message.edit(embed=MessageBox.confirmed(f"Update complete: {status}"))
+            await message.edit(embed=MessageBox.info(status))
         else:
-            await message.edit(embed=MessageBox.success(status))
+            await message.edit(embed=MessageBox.confirmed(f"Update complete: {status}"))
             reload_command = self.bot.get_command("reload")
             await ctx.invoke(reload_command)
 
