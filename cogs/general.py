@@ -153,8 +153,8 @@ class General(commands.Cog):
                     channels.append((ch, last_message[0].created_at))
                 else:
                     channels.append((ch, datetime.datetime(1990, 1, 1)))
-
-        msg = "\n".join([f"{n}. {ch.mention}" for ch, dt in sorted(channels, lambda x: x[1])])
+        dead_channels = list(sorted(channels, lambda x: x[1]))[:10]
+        msg = "\n".join([f"{n}. {ch[0].mention}" for n, ch in enumerate(dead_channels, start=1)])
         await ctx.send(embed=MessageBox.info(msg))
 
     @commands.command()
