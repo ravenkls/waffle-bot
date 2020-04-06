@@ -29,7 +29,7 @@ class Reputation(commands.Cog):
     @commands.command()
     async def rep(self, ctx, member: discord.Member):
         """Add a reputation point to a member."""
-        checks.author_is_not_member(ctx, member)
+        checks.member_is_other(ctx, member)
         where_sql, where_values = DBFilter(guild_id=ctx.guild.id, member_id=member.id).sql()
         reps = await self.bot.database.execute_sql(
             f"UPDATE reputation SET points = points + 1 {where_sql} RETURNING points",
@@ -43,7 +43,28 @@ class Reputation(commands.Cog):
             reps = reps[0]["points"]
         
         await ctx.send(embed=MessageBox.success(f"{member.mention} now has `{reps}` reputation points."))
-        
+
+    @commands.command()
+    async def leaderboard(self, ctx):
+        """Displays the server reputation leaderboard."""
+        scores = await self.reputation.filter(
+            where=DBFilter(guild_id=ctx.guild.id),
+            order_by="points",
+            desc=True
+        )
+        top10 = []
+        i = 0
+        while len(top10) < 10 and i < len(scores):
+            record = scores[i]
+            if member := ctx.guild.get_member(int(record["member_id"])):
+                top10.append((member, record["points"]))
+            i += 1
+        embed = discord.Embed(colour=0xffb636)
+        embed.set_author(name="Reputation Leaderboard", icon_url="https://i.imgur.com/wreHU7E.png")
+        for member, reps in top10:
+            embed.add_field(name=member.display_name, value=reps)
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Reputation(bot))

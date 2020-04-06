@@ -25,13 +25,15 @@ def can_modify_role(ctx, role):
         raise BotHasLowRankError()
 
 
-def author_is_not_member(ctx, member):
-    """Checks whether the command author is not the
-    member.
+def member_is_other(ctx, member):
+    """Checks whether the target member is another
+    member of the server.
 
     If this check fails, an error is raised."""
     if ctx.author == member:
         raise commands.errors.CommandError("You cannot use this command on yourself.")
+    elif member.bot:
+        raise commands.errors.CommandError("You cannot use this command on a bot.")
 
 
 async def is_guild_owner(ctx):

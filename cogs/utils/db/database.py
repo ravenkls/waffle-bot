@@ -64,20 +64,22 @@ class DBQuery:
         self.url = self.database.url
         self.name = name
 
-    async def all(self, limit=None):
+    async def all(self, limit=None, order_by=None, desc=False):
         """Get all records in the table."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
+        order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
         conn = await asyncpg.connect(self.url)
-        records = await conn.fetch(f"SELECT * FROM {self.name} {limit_sql};")
+        records = await conn.fetch(f"SELECT * FROM {self.name} {limit_sql} {order_by_sql};")
         await conn.close()
         return records
 
-    async def filter(self, where: DBFilter, limit=None):
+    async def filter(self, where: DBFilter, limit=None, order_by=None, desc=False):
         """Get records in the table based on a filter."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
+        order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
         where_sql, where_values = where.sql()
         conn = await asyncpg.connect(self.url)
-        records = await conn.fetch(f"SELECT * FROM {self.name} {where_sql} {limit_sql};", *where_values)
+        records = await conn.fetch(f"SELECT * FROM {self.name} {where_sql} {limit_sql} {order_by_sql};", *where_values)
         await conn.close()
         return records
 
