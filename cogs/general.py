@@ -145,7 +145,7 @@ class General(commands.Cog):
     @commands.command()
     async def deadchannels(self, ctx):
         """Returns the top 10 channels which are most dead in the server."""
-        message = await ctx.send(MessageBox.loading("Gathering channel data."))
+        message = await ctx.send(embed=MessageBox.loading("Gathering channel data."))
         channels = []
         for ch in ctx.guild.channels:
             if isinstance(ch, discord.TextChannel):
