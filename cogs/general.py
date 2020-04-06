@@ -143,6 +143,21 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    async def deadchannels(self, ctx):
+        """Returns the top 10 channels which are most dead in the server."""
+        channels = []
+        for ch in ctx.guild.channels:
+            if isinstance(ch, discord.TextChannel):
+                last_message = await ch.history(limit=1).flatten()
+                if last_message:
+                    channels.append((ch, last_message[0].created_at))
+                else:
+                    channels.append((ch, datetime.datetime(1990, 1, 1)))
+
+        msg = "\n".join([f"{n}. {ch.mention}" for ch, dt in sorted(channels, lambda x: x[1])])
+        await ctx.send(embed=MessageBox.info(msg))
+
+    @commands.command()
     async def ping(self, ctx):
         """Pong!"""
         response = await ctx.send("ping...")
