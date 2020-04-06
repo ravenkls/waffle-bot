@@ -145,6 +145,7 @@ class General(commands.Cog):
     @commands.command()
     async def deadchannels(self, ctx):
         """Returns the top 10 channels which are most dead in the server."""
+        message = await ctx.send(MessageBox.loading("Gathering channel data."))
         channels = []
         for ch in ctx.guild.channels:
             if isinstance(ch, discord.TextChannel):
@@ -153,9 +154,9 @@ class General(commands.Cog):
                     channels.append((ch, last_message[0].created_at))
                 else:
                     channels.append((ch, datetime.datetime(1990, 1, 1)))
-        dead_channels = list(sorted(channels, lambda x: x[1]))[:10]
+        dead_channels = list(sorted(channels, key=lambda x: x[1]))[:10]
         msg = "\n".join([f"{n}. {ch[0].mention}" for n, ch in enumerate(dead_channels, start=1)])
-        await ctx.send(embed=MessageBox.info(msg))
+        await message.edit(embed=MessageBox.info(msg))
 
     @commands.command()
     async def ping(self, ctx):
