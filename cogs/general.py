@@ -68,7 +68,7 @@ class General(commands.Cog):
         """Get the latest from the git repository."""
         message = await ctx.send(embed=MessageBox.loading("Checking GitHub for updates."))
         out = subprocess.run("git pull", capture_output=True, shell=True)
-        status = out.stdout.decode().strip().split("\n")
+        status = out.stdout.decode().strip().split("\n")[0]
         if status == "Already up to date.":
             await message.edit(embed=MessageBox.confirmed(status))
             reload_command = self.bot.get_command("reload")
