@@ -7,6 +7,7 @@ import humanize
 from discord.ext import commands
 
 from .utils.messages import MessageBox
+from .utils.db.database import DBFilter
 
 
 class General(commands.Cog):
