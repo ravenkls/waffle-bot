@@ -1,8 +1,12 @@
-import inspect
-import discord
-from discord.ext import commands
 import datetime
+import inspect
+import subprocess
+
+import discord
 import humanize
+from discord.ext import commands
+
+from .utils.messages import MessageBox
 
 
 class General(commands.Cog):
@@ -57,6 +61,31 @@ class General(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def update(self, ctx):
+        """Get the latest from the git repository."""
+        message = await ctx.send(embed=MessageBox.loading("Checking GitHub for updates."))
+        out = subprocess.run("git pull", capture_output=True)
+        status = out.stdout.decode().strip().split("\n")
+        if status == "Already up to date.":
+            await message.edit(embed=MessageBox.confirmed(status))
+            reload_command = self.bot.get_command("reload")
+            await ctx.invoke(reload_command)
+        else:
+            await message.edit(embed=MessageBox.success(status))
+
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def reload(self, ctx):
+        """Reload all extensions."""
+        extensions = self.bot.extensions.keys()
+        message = await ctx.send(embed=MessageBox.loading(f"Reloading {len(extensions)} extensions..."))
+        for e in extensions:
+            self.bot.unload_extension(e)
+            self.bot.load_extension(e)
+        await message.edit(embed=MessageBox.success(f"{len(extensions)} extensions have been reloaded."))
 
     @commands.command()
     async def uptime(self, ctx):
