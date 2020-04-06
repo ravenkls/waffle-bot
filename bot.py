@@ -11,6 +11,7 @@ class WaffleBot(commands.Bot):
         self.database = Database(self.database_url)
         self.load_extension("cogs.general")
         self.load_extension("cogs.admin")
+        self.load_extension("cogs.reputation")
         self.logger = logging.getLogger(__name__)
 
     async def on_connect(self):
