@@ -21,9 +21,12 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.emoji = "🔨"
-
-    @commands.Cog.listener()
-    async def on_ready(self):
+        
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.setup())
+        
+    async def setup(self):
+        await self.bot.wait_until_ready()
         await punishments.setup(self.bot)
         await punishments.start_tracking()
 
