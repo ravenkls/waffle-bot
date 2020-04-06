@@ -143,7 +143,7 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def deadchannels(self, ctx, limit=10):
+    async def deadchannels(self, ctx, limit: int = 10):
         """Returns the top 10 channels which are most dead in the server."""
         message = await ctx.send(embed=MessageBox.loading("Gathering channel data."))
         channels = []
