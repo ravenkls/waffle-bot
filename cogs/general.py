@@ -71,16 +71,16 @@ class General(commands.Cog):
         status = out.stdout.decode().strip().split("\n")[0]
         if status == "Already up to date.":
             await message.edit(embed=MessageBox.confirmed(status))
-            reload_command = self.bot.get_command("reload")
-            await ctx.invoke(reload_command)
         else:
             await message.edit(embed=MessageBox.success(status))
+            reload_command = self.bot.get_command("reload")
+            await ctx.invoke(reload_command)
 
     @commands.is_owner()
     @commands.command(hidden=True)
     async def reload(self, ctx):
         """Reload all extensions."""
-        extensions = self.bot.extensions.keys()
+        extensions = list(self.bot.extensions.keys())
         message = await ctx.send(embed=MessageBox.loading(f"Reloading {len(extensions)} extensions..."))
         for e in extensions:
             self.bot.unload_extension(e)
