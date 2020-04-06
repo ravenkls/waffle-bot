@@ -96,9 +96,9 @@ class General(commands.Cog):
             else:
                 response = eval(code)
             if response is not None:
-                await ctx.send(embed=MessageBox.info("```py\n{}```".format(response)))
+                await ctx.send("```py\n{}```".format(response))
         except Exception as e:
-            await ctx.send(embed=MessageBox.critical("```py\n{}```".format(e)))
+            await ctx.send("```py\n{}```".format(e))
 
     @commands.command()
     async def uptime(self, ctx):
