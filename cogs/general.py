@@ -92,8 +92,7 @@ class General(commands.Cog):
         """Displays how long I've been online for."""
         uptime = datetime.datetime.now() - self.start_time
         uptime_string = humanize.naturaldelta(uptime)
-        embed = discord.Embed(description=f"I have been online for {uptime_string}")
-        await ctx.send(embed=embed)
+        await ctx.send(embed=MessageBox.info(f"I have been online for {uptime_string}"))
 
     @commands.command()
     async def userinfo(self, ctx, member: discord.Member):
@@ -106,7 +105,7 @@ class General(commands.Cog):
         creation_date = member.created_at.strftime("%d %B %Y")
         creation_ago = (now - member.created_at).days
 
-        embed = discord.Embed(title="User Details", description=member.mention)
+        embed = discord.Embed(title="User Details", description=member.mention, colour=member.colour)
         embed.set_author(
             name=member.name,
             icon_url=member.avatar_url_as(format="png", static_format="png"),
