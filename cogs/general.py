@@ -87,6 +87,19 @@ class General(commands.Cog):
             self.bot.load_extension(e)
         await message.edit(embed=MessageBox.success(f"{len(extensions)} extensions have been reloaded."))
 
+    @commands.command(name="eval", hidden=True)
+    @commands.is_owner()
+    async def _eval(self, ctx, *, code):
+        try:
+            if code.startswith("await "):
+                response = await eval(code.replace("await ", ""))
+            else:
+                response = eval(code)
+            if response is not None:
+                await ctx.send(embed=MessageBox.info("```py\n{}```".format(response)))
+        except Exception as e:
+            await ctx.send(embed=MessageBox.critical("```py\n{}```".format(e)))
+
     @commands.command()
     async def uptime(self, ctx):
         """Displays how long I've been online for."""
