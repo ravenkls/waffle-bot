@@ -66,3 +66,12 @@ class NegativeBoolean(commands.Converter):
         if str(argument).lower() in ("off", "disable", "false"):
             return False
         raise commands.errors.BadArgument("A negative boolean should either be `off`, `disable` or `false`.")
+
+
+class EveryoneRole(commands.Converter):
+
+    async def convert(self, ctx, argument):
+        """Converts an argument into the everyone role."""
+        if argument == "everyone":
+            return ctx.guild.default_role
+        raise commands.errors.BadArgument("Specify the everyone role by typing the word `everyone`")

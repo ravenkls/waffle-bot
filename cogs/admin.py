@@ -10,7 +10,7 @@ from .utils import checks, db
 from .utils.db.database import DBFilter
 from .utils.db.fields import *
 from .utils.controllers import ChannelLogger, PunishmentManager, ReactionRoleManager
-from .utils.messages import MessageBox, Duration, NegativeBoolean
+from .utils.messages import MessageBox, Duration, NegativeBoolean, EveryoneRole
 
 
 modlogger = ChannelLogger("moderation_log")
@@ -141,7 +141,7 @@ class Admin(commands.Cog):
 
     @commands.guild_only()
     @commands.command()
-    async def roles(self, ctx, action, current_role: discord.Role, roles: commands.Greedy[discord.Role]):
+    async def roles(self, ctx, action, current_role: typing.Union[discord.Role, EveryoneRole], roles: commands.Greedy[discord.Role]):
         """Manage server roles.
 
         Examples:
