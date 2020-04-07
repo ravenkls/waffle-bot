@@ -29,7 +29,7 @@ class MessageBox(discord.Embed):
     @classmethod
     def loading(cls, message):
         embed = cls(colour=0xfeac33)
-        embed.set_author(name=description, icon_url="https://i.imgur.com/z6imAKZ.gif")
+        embed.set_author(name=message, icon_url="https://i.imgur.com/z6imAKZ.gif")
         return embed
 
 
