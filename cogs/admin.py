@@ -203,7 +203,7 @@ class Admin(commands.Cog):
         `ban 144912469071101952` Bans the user with ID 144912469071101952 indefinitely"""
         if isinstance(member, discord.Member):
             checks.can_modify_member(ctx, member)
-            await member.send(f"🔨 You have been banned from {ctx.guild.name}. Reason: {reason}")
+            await member.send(embed=MessageBox.critical(f"You have been banned from {ctx.guild.name}. Reason: {reason}"))
         else:
             member = discord.Object(id=member)
 

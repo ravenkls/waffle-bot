@@ -24,7 +24,9 @@ class MessageBox(discord.Embed):
 
     @classmethod
     def critical(cls, message):
-        return cls(colour=0xbe1931, description=f"⛔    {message}")
+        embed = cls(colour=0xbe1931)
+        embed.set_author(name=message, icon_url="https://i.imgur.com/OjJaekp.png")
+        return embed
 
     @classmethod
     def loading(cls, message):
