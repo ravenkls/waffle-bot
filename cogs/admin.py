@@ -9,12 +9,13 @@ import humanize
 from .utils import checks, db
 from .utils.db.database import DBFilter
 from .utils.db.fields import *
-from .utils.controllers import ChannelLogger, PunishmentManager
+from .utils.controllers import ChannelLogger, PunishmentManager, ReactionRoleManager
 from .utils.messages import MessageBox, Duration, NegativeBoolean
 
 
 modlogger = ChannelLogger("moderation_log")
 punishments = PunishmentManager()
+reaction_roles = ReactionRoleManager()
 
 
 class Admin(commands.Cog):
@@ -28,6 +29,8 @@ class Admin(commands.Cog):
     async def setup(self):
         await self.bot.wait_until_ready()
         await punishments.setup(self.bot)
+        await reaction_roles.setup(self.bot)
+
         await punishments.start_tracking()
 
     @commands.Cog.listener()
@@ -43,6 +46,10 @@ class Admin(commands.Cog):
             mute_role = await db.extras.get_role(self.bot.database, member.guild, "mute_role")
             if mute_role:
                 await member.add_roles(mute_role)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        await reaction_roles.check_reaction_add(payload)
 
     async def cog_check(self, ctx):
         if ctx.author == ctx.guild.owner:
@@ -160,6 +167,28 @@ class Admin(commands.Cog):
         else:
             raise commands.errors.BadArgument('The "action" parameter must be one of `add`, `remove`, or `switch`.')
         await message.edit(embed=MessageBox.success("Roles have been changed successfully."))
+
+    @commands.guild_only()
+    @commands.command(aliases=["rradd"])
+    async def addreactionrole(self, ctx, message_id: int, role: discord.Role, emoji, nick: str = None):
+        """Enter reaction role setup."""
+        message = await ctx.channel.fetch_message(message_id)
+        await reaction_roles.add_reaction_role(message, emoji, role, nick)
+        await ctx.message.delete()
+        msg = await ctx.send(embed=MessageBox.success(f"{role} has been added to [this message]({message.jump_url})"))
+        await asyncio.sleep(5)
+        await msg.delete()
+
+    @commands.guild_only()
+    @commands.command(aliases=["rrdel"])
+    async def delreactionrole(self, ctx, message_id: int, emoji):
+        """Enter reaction role setup."""
+        message = await ctx.channel.fetch_message(message_id)
+        await reaction_roles.remove_reaction_role(message, emoji)
+        await ctx.message.delete()
+        msg = await ctx.send(embed=MessageBox.success(f"{str(emoji)} has been removed from [this message]({message.jump_url})"))
+        await asyncio.sleep(5)
+        await msg.delete()
 
     @modlogger.log_action
     @commands.guild_only()

@@ -73,7 +73,7 @@ class PunishmentManager:
     def __init__(self):
         self.bot = None
         self.database = None
-        self.infractions_table = None
+        self.infractions = None
 
     async def setup(self, bot):
         """Setup the punishment manager."""
@@ -157,3 +157,108 @@ class PunishmentManager:
             mute_role = await db.extras.get_role(self.bot.database, guild, "mute_role")
             member = guild.get_member(user.id)
             await member.remove_roles(mute_role)
+
+
+class ReactionRoleManager:
+    def __init__(self):
+        self.bot = None
+        self.database = None
+        self.reaction_roles = None
+
+    async def setup(self, bot):
+        """Setup the punishment manager."""
+        self.bot = bot
+        self.database = self.bot.database
+
+        self.reaction_roles = await self.database.new_table(
+            "reaction_roles",
+            (
+                BigInteger("guild_id"),
+                BigInteger("channel_id"),
+                BigInteger("message_id"),
+                Text("emoji"),
+                BigInteger("role_id"),
+                Text("nickname"),
+            ),
+        )
+    
+    async def add_reaction_role(self, message, emoji, role, nick=None):
+        """Add a role reaction to a message."""
+        await self.reaction_roles.new_record(
+            guild_id=message.guild.id,
+            channel_id=message.channel.id,
+            message_id=message.id,
+            emoji=str(emoji),
+            role_id=role.id,
+            nickname=nick,
+        )
+        await message.add_reaction(emoji)
+
+    async def remove_reaction_role(self, message, emoji):
+        """Remove a role reaction from a message."""
+        await self.reaction_roles.delete_records(
+            where=DBFilter(
+                guild_id=message.guild.id,
+                channel_id=message.channel.id,
+                message_id=message.id,
+                emoji=str(emoji),
+            )
+        )
+        await message.remove_reaction(emoji, message.guild.get_member(self.bot.user.id))
+
+    async def get_reaction_roles(self, message):
+        """Get all reaction roles for a message."""
+        return await self.reaction_roles.filter(
+            where=DBFilter(
+                guild_id=message.guild.id,
+                channel_id=message.channel.id,
+                message_id=message.id,
+            )
+        )
+
+    async def check_reaction_add(self, payload):
+        """Check whether to add roles to a member when
+        they react to a message."""
+        if payload.member.bot:
+            return
+
+        records = await self.reaction_roles.filter(
+            where=DBFilter(
+                guild_id=payload.guild_id,
+                channel_id=payload.channel_id,
+                message_id=payload.message_id,
+                emoji=str(payload.emoji)
+            )
+        )
+
+        if not records:
+            return
+
+        guild = self.bot.get_guild(payload.guild_id)
+        roles = [guild.get_role(r["role_id"]) for r in records]
+        nickname = [r["nickname"] for r in records if r["nickname"]]
+        if nickname:
+            nickname = nickname[0]
+
+        if all(r in payload.member.roles for r in roles):
+            await payload.member.remove_roles(*roles)
+            if nickname:
+                new_nick = payload.member.display_name.split("||")[0].strip()
+                try:
+                    await payload.member.edit(nick=new_nick)
+                except discord.errors.Forbidden:
+                    pass
+        else:
+            await payload.member.add_roles(*roles)
+            if nickname:
+                nick_length = len(" || " + nickname)
+                max_len = 32 - nick_length
+                new_nick = payload.member.display_name[:max_len]
+                try:
+                    await payload.member.edit(nick=new_nick)
+                except discord.errors.Forbidden:
+                    pass
+
+        channel = guild.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        await message.remove_reaction(payload.emoji, payload.member)
