@@ -1,7 +1,12 @@
+import logging
+import os
+import sys
+import configparser
+
 from discord.ext import commands
+
 from cogs.utils.db import Database
 from cogs.utils.db.fields import *
-import logging
 
 
 class WaffleBot(commands.Bot):
@@ -21,12 +26,30 @@ class WaffleBot(commands.Bot):
         self.logger.info("Bot is ready and accepting commands.")
 
 
-if __name__ == "__main__":
-    with open("token.txt") as f:
-        token = f.read().strip()
-    with open("database_creds.txt") as f:
-        database_url = f.read().strip()
+def generate_settings():
+    config = configparser.ConfigParser()
+    config["BotSettings"] = {"token": "", "database_url": ""}
+    with open("settings.cfg", "w") as f:
+        config.write(f)
 
+
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] [%(name)s] %(message)s")
+
+    if not os.path.exists("settings.cfg"):
+        generate_settings()
+        logging.critical("No config found. generating 'settings.cfg', please fill "
+                         "in the required settings before running the bot")
+        sys.exit()
+    
+    config = configparser.ConfigParser()
+    config.read("settings.cfg")
+    try:
+        token = config["BotSettings"]["token"]
+        database_url = config["BotSettings"]["database_url"]
+    except (configparser.NoSectionError, KeyError):
+        logging.critical("Malformed 'settings.cfg' file, please fix this before running the bot.")
+        sys.exit()
+
     bot = WaffleBot(database_url)
     bot.run(token)

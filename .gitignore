@@ -1,4 +1,3 @@
 __pycache__/
 .vscode/
-token.txt
-database_creds.txt
+settings.cfg
