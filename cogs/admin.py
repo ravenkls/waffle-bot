@@ -150,7 +150,7 @@ class Admin(commands.Cog):
         `roles switch Moderator Admin` Moves all Moderators to the Admin role"""
         checks.can_modify_role(ctx, current_role)
         [checks.can_modify_role(ctx, r) for r in roles]
-        role_mentions = " and ".join([r.mention for r in roles])
+        role_mentions = " and ".join([r.name for r in roles])
         if action.lower() == "add":
             message = await ctx.send(embed=MessageBox.loading(f"Adding {role_mentions} to members with the {current_role} role."))
             for m in current_role.members:
