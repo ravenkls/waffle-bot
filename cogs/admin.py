@@ -309,7 +309,7 @@ class Moderation(commands.Cog):
         """Warn a member of the server."""
         checks.can_modify_member(ctx, member)
         await punishments.add_punishment("warn", author=ctx.author, user=member, reason=str(reason))
-        await member.send(embed=MessageBox.warning(f"You have been warned. Reason: {reason}"))
+        await member.send(embed=MessageBox.warning(f"You have been warned on {ctx.guild.name}. Reason: {reason}"))
         await ctx.send(embed=MessageBox.success(f"{member.mention} has been warned. Reason: {reason}"))
 
     @commands.guild_only()
