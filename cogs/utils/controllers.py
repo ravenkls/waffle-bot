@@ -239,7 +239,6 @@ class ReactionRoleManager:
         nickname = [r["nickname"] for r in records if r["nickname"]]
         if nickname:
             nickname = nickname[0]
-            print(nickname)
 
         if all(r in payload.member.roles for r in roles):
             await payload.member.remove_roles(*roles)
@@ -254,8 +253,7 @@ class ReactionRoleManager:
             if nickname:
                 nick_length = len(" || " + nickname)
                 max_len = 32 - nick_length
-                new_nick = payload.member.display_name[:max_len]
-                print(new_nick)
+                new_nick = payload.member.display_name[:max_len] + " || " + nickname
                 try:
                     await payload.member.edit(nick=new_nick)
                 except discord.errors.Forbidden:
