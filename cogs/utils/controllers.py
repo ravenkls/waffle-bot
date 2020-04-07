@@ -204,12 +204,6 @@ class ReactionRoleManager:
                 emoji=str(emoji),
             )
         )
-        print(DBFilter(
-                guild_id=message.guild.id,
-                channel_id=message.channel.id,
-                message_id=message.id,
-                emoji=str(emoji),
-            ).sql())
         await message.remove_reaction(emoji, message.guild.get_member(self.bot.user.id))
 
     async def get_reaction_roles(self, message):
