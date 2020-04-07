@@ -28,7 +28,9 @@ class MessageBox(discord.Embed):
 
     @classmethod
     def loading(cls, message):
-        return cls(colour=0xfeac33, description=f"⌛     {message}")
+        embed = cls(colour=0xfeac33)
+        embed.set_author(name=description, icon_url="https://i.imgur.com/z6imAKZ.gif")
+        return embed
 
 
 class Duration(commands.Converter):
