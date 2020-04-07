@@ -208,8 +208,6 @@ class Admin(commands.Cog):
             member = discord.Object(id=member)
 
         try:
-            print(member)
-            print(ctx.guild)
             await ctx.guild.ban(member, reason=reason)
         except discord.errors.NotFound:
             raise commands.errors.BadArgument(f'User "{member.id}" not found')
