@@ -66,7 +66,7 @@ class Demographics(commands.Cog):
 
     @commands.check(checks.is_admin)
     @commands.command()
-    async def trackrole(self, ctx, role: discord.Role):
+    async def trackrole(self, ctx, *, role: discord.Role):
         """Begin tracking the demographics of a role."""
         status = await self.demographics_roles.delete_records(
             where=DBFilter(
