@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from .exceptions import CantModifyError, BotHasLowRankError
+from . import db
 
 
 async def is_admin(ctx):
