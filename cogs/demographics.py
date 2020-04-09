@@ -90,9 +90,12 @@ class Demographics(commands.Cog):
         role_records = await self.demographics_roles.filter(
             where=DBFilter(guild_id=ctx.guild.id)
         )
-        mentions = [ctx.guild.get_role(r["role_id"]).mention for r in role_records]
-        embed = discord.Embed(title="Tracked Roles", description="\n".join(sorted(mentions)))
-        await ctx.send(embed=embed)
+        if role_records:
+            roles = [ctx.guild.get_role(r["role_id"]) for r in role_records]]
+            mentions = [r.mention for r in sorted(roles, reverse=True)]
+            await ctx.send(embed=MessageBox.info("You are tracking the following roles\n" + "\n".join(mentions)))
+        else:
+            await ctx.send(embed=MessageBox.info("You are not tracking any roles on this server."))
 
     @commands.command()
     async def demographics(self, ctx):

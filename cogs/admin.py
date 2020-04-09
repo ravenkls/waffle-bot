@@ -35,12 +35,14 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel):
+        await self.bot.wait_until_ready()
         mute_role = await db.extras.get_role(self.bot.database, channel.guild, "mute_role")
         if mute_role:
             await channel.set_permissions(mute_role, send_messages=False, speak=False)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        await self.bot.wait_until_ready()
         punishment = await punishments.get_punishment("mute", member.guild, member)
         if punishment:
             mute_role = await db.extras.get_role(self.bot.database, member.guild, "mute_role")
@@ -49,6 +51,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        await self.bot.wait_until_ready()
         await reaction_roles.check_reaction_add(payload)
 
     async def cog_check(self, ctx):
