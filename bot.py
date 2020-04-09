@@ -10,13 +10,14 @@ from cogs.utils.db.fields import *
 
 
 class WaffleBot(commands.Bot):
-    def __init__(self, database_url):
-        super().__init__(command_prefix="-")
+    def __init__(self, prefix, database_url):
+        super().__init__(command_prefix=prefix)
         self.database_url = database_url
         self.database = Database(self.database_url)
         self.load_extension("cogs.general")
         self.load_extension("cogs.admin")
         self.load_extension("cogs.reputation")
+        self.load_extension("cogs.demographics")
         self.logger = logging.getLogger(__name__)
 
     async def on_connect(self):
@@ -28,7 +29,7 @@ class WaffleBot(commands.Bot):
 
 def generate_settings():
     config = configparser.ConfigParser()
-    config["BotSettings"] = {"token": "", "database_url": ""}
+    config["BotSettings"] = {"token": "", "database_url": "", "prefix": ""}
     with open("settings.cfg", "w") as f:
         config.write(f)
 
@@ -47,9 +48,10 @@ if __name__ == "__main__":
     try:
         token = config["BotSettings"]["token"]
         database_url = config["BotSettings"]["database_url"]
+        prefix = config["BotSettings"]["prefix"]
     except (configparser.NoSectionError, KeyError):
         logging.critical("Malformed 'settings.cfg' file, please fix this before running the bot.")
         sys.exit()
 
-    bot = WaffleBot(database_url)
+    bot = WaffleBot(prefix, database_url)
     bot.run(token)

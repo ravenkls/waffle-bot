@@ -11,6 +11,7 @@ discord = "*"
 humanize = "*"
 asyncpg = "*"
 discord-py = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.8"
