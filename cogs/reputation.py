@@ -31,16 +31,17 @@ class Reputation(commands.Cog):
         """Add a reputation point to a member."""
         checks.member_is_other(ctx, member)
         where_sql, where_values = DBFilter(guild_id=ctx.guild.id, member_id=member.id).sql()
-        reps = await self.bot.database.execute_sql(
-            f"UPDATE reputation SET points = points + 1 {where_sql} RETURNING points",
-            *where_values,
-            fetch=True
-        )
+        async with self.bot.database.connection() as conn:
+            reps = await conn.fetchone(
+                f"UPDATE reputation SET points = points + 1 {where_sql} RETURNING points",
+                *where_values,
+                fetch=True
+            )
         if not reps:
             await self.reputation.new_record(guild_id=ctx.guild.id, member_id=member.id, points=1)
             reps = 1
         else:
-            reps = reps[0]["points"]
+            reps = reps["points"]
         
         await ctx.send(embed=MessageBox.success(f"{member.mention} now has `{reps}` reputation points."))
 

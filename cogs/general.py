@@ -88,8 +88,8 @@ class General(commands.Cog):
             self.bot.load_extension(e)
         await message.edit(embed=MessageBox.success(f"{len(extensions)} extensions have been reloaded."))
 
-    @commands.command(name="eval", hidden=True)
     @commands.is_owner()
+    @commands.command(name="eval", hidden=True)
     async def _eval(self, ctx, *, code):
         try:
             if code.startswith("await "):
@@ -100,6 +100,16 @@ class General(commands.Cog):
                 await ctx.send("```py\n{}```".format(response))
         except Exception as e:
             await ctx.send("```py\n{}```".format(e))
+
+    @commands.is_owner()
+    @commands.command(hidden=True)
+    async def storage(self, ctx):
+        """Get the size of the database."""
+        async with self.bot.database.connection() as conn:
+            # TODO: probably make it get the database name automatically rather than finding it like this
+            size = await conn.fetchrow("SELECT pg_database_size('wafflebot')")
+        human_size = humanize.naturalsize(size["pg_database_size"])
+        await ctx.send(embed=MessageBox.info(f"Database Size: `{human_size}`"))
 
     @commands.command()
     async def uptime(self, ctx):

@@ -2,6 +2,7 @@ import asyncio
 import asyncpg
 from .fields import *
 from collections import defaultdict
+from contextlib import asynccontextmanager
 
 
 class DBFilter:
@@ -68,69 +69,57 @@ class DBQuery:
         """Get all records in the table."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
         order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
-        conn = await asyncpg.connect(self.url)
-        records = await conn.fetch(f"SELECT * FROM {self.name} {order_by_sql} {limit_sql};")
-        await conn.close()
-        return records
+        async with self.database.connection() as conn:
+            return await conn.fetch(f"SELECT * FROM {self.name} {order_by_sql} {limit_sql};")
 
     async def filter(self, where: DBFilter, limit=None, order_by=None, desc=False):
         """Get records in the table based on a filter."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
         order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
         where_sql, where_values = where.sql()
-        conn = await asyncpg.connect(self.url)
-        records = await conn.fetch(f"SELECT * FROM {self.name} {where_sql} {order_by_sql} {limit_sql};", *where_values)
-        await conn.close()
-        return records
+        async with self.database.connection() as conn:
+            return await conn.fetch(f"SELECT * FROM {self.name} {where_sql} {order_by_sql} {limit_sql};", *where_values)
 
     async def new_record(self, **kwargs):
         """Create a new record in a database."""
         fields_sql = ", ".join(kwargs.keys())
         values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
-        conn = await asyncpg.connect(self.url)
-        result = await conn.execute(
-            f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
-        )
-        await conn.close()
-        return result
+        async with self.database.connection() as conn:
+            return await conn.execute(
+                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
+            )
 
     async def new_record_with_id(self, **kwargs):
         """Create a new record in a database and return the 'id' value.
         Note: this only works on tables with a SerialIdentifier field."""
         fields_sql = ", ".join(kwargs.keys())
         values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
-        conn = await asyncpg.connect(self.url)
-        result =  await conn.fetchval(
-            f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql}) RETURNING id;", *kwargs.values()
-        )
-        await conn.close()
-        return result
+        async with self.database.connection() as conn:
+            return await conn.fetchval(
+                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql}) RETURNING id;", *kwargs.values()
+            )
 
     async def update_records(self, where: DBFilter = None, **kwargs):
         """Update records in a database table."""
         updates_sql = ", ".join([f"{field}=${n}" for n, field in enumerate(kwargs.keys(), start=1)])
 
-        conn = await asyncpg.connect(self.url)
-        if where:
-            where_sql, where_values = where.sql(placeholders_from=len(kwargs)+1)
-            result = await conn.execute(
-                f"UPDATE {self.name} SET {updates_sql} {where_sql};", *kwargs.values(), *where_values
-            )
-        else:
-            result = await conn.execute(f"UPDATE {self.name} SET {updates_sql};", *kwargs.values())
-        await conn.close()
-        return result
+        async with self.database.connection() as conn:
+            if where:
+                where_sql, where_values = where.sql(placeholders_from=len(kwargs)+1)
+                return await conn.execute(
+                    f"UPDATE {self.name} SET {updates_sql} {where_sql};", *kwargs.values(), *where_values
+                )
+            else:
+                return await conn.execute(f"UPDATE {self.name} SET {updates_sql};", *kwargs.values())
 
     async def delete_records(self, *, where: DBFilter = None):
         """Delete records in a database table."""
-        conn = await asyncpg.connect(self.url)
-        if where:
-            where_sql, where_values = where.sql()
-            result = await conn.execute(f"DELETE FROM {self.name} {where_sql};", *where_values)
-        else:
-            result = await conn.execute(f"DELETE FROM {self.name};")
-        await conn.close()
-        return result
+        async with self.database.connection() as conn:
+            if where:
+                where_sql, where_values = where.sql()
+                return await conn.execute(f"DELETE FROM {self.name} {where_sql};", *where_values)
+            else:
+                return await conn.execute(f"DELETE FROM {self.name};")
 
 
 class Database:
@@ -165,19 +154,17 @@ class Database:
 
     async def new_table(self, name, fields):
         fields = ", ".join([f'"{f.name}" {f.datatype}' for f in fields])
-        conn = await asyncpg.connect(self.url)
-        await conn.execute(f"CREATE TABLE IF NOT EXISTS {name} ({fields});")
-        await conn.close()
+        async with self.connection() as conn:
+            await conn.execute(f"CREATE TABLE IF NOT EXISTS {name} ({fields});")
         return self.table(name)
 
-    async def execute_sql(self, sql, *params, fetch=False):
+    @asynccontextmanager
+    async def connection(self):
         conn = await asyncpg.connect(self.url)
-        if fetch:
-            result = await conn.fetch(sql, *params)
-        else:
-            result = await conn.execute(sql, *params)
-        await conn.close()
-        return result
+        try:
+            yield conn
+        finally:
+            await conn.close()
 
     def table(self, name):
         return DBQuery(self, name)
