@@ -91,7 +91,7 @@ class Demographics(commands.Cog):
             where=DBFilter(guild_id=ctx.guild.id)
         )
         if role_records:
-            roles = [ctx.guild.get_role(r["role_id"]) for r in role_records]]
+            roles = [ctx.guild.get_role(r["role_id"]) for r in role_records]
             mentions = [r.mention for r in sorted(roles, reverse=True)]
             await ctx.send(embed=MessageBox.info("You are tracking the following roles\n" + "\n".join(mentions)))
         else:
