@@ -3,6 +3,32 @@ from discord.ext import commands
 from .exceptions import CantModifyError, BotHasLowRankError
 
 
+async def is_admin(ctx):
+    """Checks whether the author is an Administrator."""
+    if ctx.author == ctx.guild.owner:
+        return True
+
+    admin_role = await db.extras.get_admin_role(ctx)
+    if admin_role:
+        if ctx.author.top_role >= admin_role:
+            return True
+        else:
+            await ctx.send("You are not an Administrator.")
+
+
+async def is_moderator(ctx):
+    """Checks whether the author is a Moderator."""
+    if ctx.author == ctx.guild.owner:
+        return True
+
+    mod_role = await db.extras.get_mod_role(ctx)
+    if mod_role:
+        if ctx.author.top_role >= mod_role:
+            return True
+        else:
+            await ctx.send("You are not a Moderator.")
+
+
 def can_modify_member(ctx, member):
     """Checks whether the author has permission to
     modify (i.e. kick, ban, mute, warn) another member.

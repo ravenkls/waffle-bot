@@ -52,15 +52,7 @@ class Admin(commands.Cog):
         await reaction_roles.check_reaction_add(payload)
 
     async def cog_check(self, ctx):
-        if ctx.author == ctx.guild.owner:
-            return True
-
-        admin_role = await db.extras.get_admin_role(ctx)
-        if admin_role:
-            if ctx.author.top_role >= admin_role:
-                return True
-            else:
-                await ctx.send("You are not an Administrator.")
+        await checks.is_admin(ctx)
 
     @commands.guild_only()
     @commands.command()
@@ -129,13 +121,13 @@ class Admin(commands.Cog):
             await ctx.send(embed=MessageBox.confirmed(f"{role.mention} is now the Mute role."))
 
             for channel in ctx.guild.channels:
-                await channel.set_permissions(role, send_messages=False, speak=False)
+                await channel.set_permissions(role, send_messages=False, speak=False, add_reactions=False)
         elif role is False:
             mute_role = await db.extras.get_role(self.bot.database, ctx.guild, "mute_role")
             message = await ctx.send(embed=MessageBox.loading("Cleaning up Mute role permissions."))
             if mute_role:
                 for channel in ctx.guild.channels:
-                    await channel.set_permissions(mute_role, send_messages=None, speak=None)
+                    await channel.set_permissions(mute_role, send_messages=None, speak=None, add_reactions=False)
             await db.extras.set_role(self.bot.database, ctx.guild, "mute_role", None)
             await message.edit(embed=MessageBox.confirmed("The Mute role has been reset."))
 
@@ -292,15 +284,7 @@ class Moderation(commands.Cog):
         self.emoji = "🚔"
 
     async def cog_check(self, ctx):
-        if ctx.author == ctx.guild.owner:
-            return True
-
-        mod_role = await db.extras.get_mod_role(ctx)
-        if mod_role:
-            if ctx.author.top_role >= mod_role:
-                return True
-            else:
-                await ctx.send("You are not a Moderator.")
+        await checks.is_moderator(ctx)
 
     @modlogger.log_action
     @commands.guild_only()
