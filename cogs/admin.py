@@ -52,7 +52,7 @@ class Admin(commands.Cog):
         await reaction_roles.check_reaction_add(payload)
 
     async def cog_check(self, ctx):
-        await checks.is_admin(ctx)
+        return await checks.is_admin(ctx)
 
     @commands.guild_only()
     @commands.command()
@@ -284,7 +284,7 @@ class Moderation(commands.Cog):
         self.emoji = "🚔"
 
     async def cog_check(self, ctx):
-        await checks.is_moderator(ctx)
+        return await checks.is_moderator(ctx)
 
     @modlogger.log_action
     @commands.guild_only()
