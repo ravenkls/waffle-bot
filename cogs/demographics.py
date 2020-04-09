@@ -93,7 +93,7 @@ class Demographics(commands.Cog):
         if role_records:
             roles = [ctx.guild.get_role(r["role_id"]) for r in role_records]
             mentions = [r.mention for r in sorted(roles, reverse=True)]
-            await ctx.send(embed=MessageBox.info("You are tracking the following roles\n_ _" + "\n".join(mentions)))
+            await ctx.send(embed=MessageBox.info("You are tracking the following roles\n\n" + "\n".join(mentions)))
         else:
             await ctx.send(embed=MessageBox.info("You are not tracking any roles on this server."))
 
