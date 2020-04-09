@@ -20,7 +20,11 @@ class DBFilter:
             n = num - len(removes)
             i = num - placeholders_from
             if field_name.endswith("__in"):
-                conditions[field_name[:-4]].append(f"{field_name[:-4]} IN ${n}")
+                array_sql = "(" + ", ".join([f"${x}" for x in range(n, n+len(values[i]))]) + ")"
+                array = values.pop(i)
+                for item in array[::-1]:
+                    values.insert(i, item)
+                conditions[field_name[:-4]].append(f"{field_name[:-4]} IN {array_sql}")
             elif field_name.endswith("__gt"):
                 conditions[field_name[:-4]].append(f"{field_name[:-4:]} > ${n}")
             elif field_name.endswith("__ge"):

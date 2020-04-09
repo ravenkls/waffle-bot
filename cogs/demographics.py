@@ -3,6 +3,7 @@ from itertools import groupby
 import datetime
 import logging
 from io import BytesIO
+from collections import defaultdict
 
 import discord
 from discord.ext import commands, tasks
@@ -93,9 +94,9 @@ class Demographics(commands.Cog):
         if role_records:
             roles = [ctx.guild.get_role(r["role_id"]) for r in role_records]
             mentions = [r.mention for r in sorted(roles, reverse=True)]
-            await ctx.send(embed=MessageBox.info("You are tracking the following roles\n\n" + "\n".join(mentions)))
+            await ctx.send(embed=MessageBox.info("The following roles are being tracked on this server\n\n" + "\n".join(mentions)))
         else:
-            await ctx.send(embed=MessageBox.info("You are not tracking any roles on this server."))
+            await ctx.send(embed=MessageBox.info("No roles are being tracked on this server."))
 
     @commands.command()
     async def demographics(self, ctx):
@@ -107,6 +108,25 @@ class Demographics(commands.Cog):
         graph = await self.get_current_demographics_graph(ctx.guild, roles)
         await ctx.send(file=discord.File(graph, filename="demographics.png"))
     
+    @commands.command(aliases=["history"])
+    async def demographicshistory(self, ctx):
+        """Display the historical data of the server's demographics in a graph."""
+        role_records = await self.demographics_roles.filter(
+            where=DBFilter(guild_id=ctx.guild.id)
+        )
+        tracked_role_ids = [role["role_id"] for role in role_records]
+        
+        if not tracked_role_ids:
+            return await ctx.send(embed=MessageBox.info("No roles are being tracked on this server."))
+
+        historical_records = await self.historical_demographics.filter(
+            where=DBFilter(guild_id=ctx.guild.id, role_id__in=tracked_role_ids),
+            order_by="date",
+        )
+
+        graph = await self.get_historical_demographics_graph(ctx.guild, historical_records)
+        await ctx.send(file=discord.File(graph, filename="history.png"))
+
     async def get_current_demographics_graph(self, guild, roles):
         """Create a graph of demographics for a guild for specified roles."""
         roles.sort()
@@ -133,6 +153,40 @@ class Demographics(commands.Cog):
         ax.spines["right"].set_visible(False)
         ax.yaxis.set_ticks_position("left")
         ax.xaxis.set_ticks_position("bottom")
+
+        fig.tight_layout()
+
+        image = BytesIO()
+        fig.savefig(image, format="png", transparent=True)
+        image.seek(0)
+        return image
+
+    async def get_historical_demographics_graph(self, guild, records):
+        """Create a graph of the historical demographics for a guild given records."""
+        plt.style.use("dark_background")
+        fig = plt.figure()
+
+        ax = fig.add_subplot(111)
+
+        ax.set_title(f"Historical Demographics for {guild.name}")
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        role_data = defaultdict(list)
+        for date, records in groupby(records, lambda x: x["date"]):
+            for record in records:
+                role_name = guild.get_role(record["role_id"]).name
+                role_data[role_name].append((date, record["member_count"]))
+        
+        for label, data in role_data.items():
+            xs = [d[0] for d in data]
+            ys = [d[1] for d in data]
+            plt.plot(xs, ys, label=label)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.yaxis.set_ticks_position("left")
+        ax.xaxis.set_ticks_position("bottom")
+        ax.legend(frameon=False)
 
         fig.tight_layout()
 
