@@ -198,7 +198,10 @@ class Admin(commands.Cog):
         `ban 144912469071101952` Bans the user with ID 144912469071101952 indefinitely"""
         if isinstance(member, discord.Member):
             checks.can_modify_member(ctx, member)
-            await member.send(embed=MessageBox.critical(f"You have been banned from {ctx.guild.name}. Reason: {reason}"))
+            try:
+                await member.send(embed=MessageBox.critical(f"You have been banned from {ctx.guild.name}. Reason: {reason}"))
+            except:
+                pass
         else:
             member = discord.Object(id=member)
 
@@ -239,7 +242,10 @@ class Admin(commands.Cog):
     @commands.command()
     async def kick(self, ctx, member: discord.Member, *, reason=None):
         checks.can_modify_member(ctx, member)
-        await member.send(f"👢 You have been kicked from {ctx.guild.name}. Reason: {reason}")
+        try:
+            await member.send(f"👢 You have been kicked from {ctx.guild.name}. Reason: {reason}")
+        except:
+            pass
         await member.kick(reason=reason)
         await ctx.send(embed=MessageBox.success(f"{member.mention} has been kicked. Reason: {reason}"))
         await punishments.add_punishment("kick", author=ctx.author, user=member, reason=str(reason))
@@ -296,7 +302,10 @@ class Moderation(commands.Cog):
         """Warn a member of the server."""
         checks.can_modify_member(ctx, member)
         await punishments.add_punishment("warn", author=ctx.author, user=member, reason=str(reason))
-        await member.send(embed=MessageBox.warning(f"You have been warned on {ctx.guild.name}. Reason: {reason}"))
+        try:
+            await member.send(embed=MessageBox.warning(f"You have been warned on {ctx.guild.name}. Reason: {reason}"))
+        except:
+            pass
         await ctx.send(embed=MessageBox.success(f"{member.mention} has been warned. Reason: {reason}"))
 
     @commands.guild_only()
