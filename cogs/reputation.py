@@ -32,7 +32,7 @@ class Reputation(commands.Cog):
         checks.member_is_other(ctx, member)
         where_sql, where_values = DBFilter(guild_id=ctx.guild.id, member_id=member.id).sql()
         async with self.bot.database.connection() as conn:
-            reps = await conn.fetchone(
+            reps = await conn.fetchrow(
                 f"UPDATE reputation SET points = points + 1 {where_sql} RETURNING points",
                 *where_values,
                 fetch=True
