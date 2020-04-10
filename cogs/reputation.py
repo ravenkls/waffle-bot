@@ -35,7 +35,6 @@ class Reputation(commands.Cog):
             reps = await conn.fetchrow(
                 f"UPDATE reputation SET points = points + 1 {where_sql} RETURNING points",
                 *where_values,
-                fetch=True
             )
         if not reps:
             await self.reputation.new_record(guild_id=ctx.guild.id, member_id=member.id, points=1)
