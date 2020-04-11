@@ -388,7 +388,7 @@ class Moderation(commands.Cog):
             await punishments.infractions.delete_records(
                 where=DBFilter(guild_id=ctx.guild.id, id=id)
             )
-            await ctx.send(MessageBox.success(f"Infraction {id} has been removed."))
+            await ctx.send(embed=MessageBox.success(f"Infraction {id} has been removed."))
 
     @modlogger.log_action
     @commands.guild_only()
