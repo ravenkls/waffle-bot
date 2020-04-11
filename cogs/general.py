@@ -144,11 +144,12 @@ class General(commands.Cog):
             name="Account Creation Date",
             value=f"{creation_date} ({creation_ago} days ago)",
         )
-        embed.add_field(
-            name="Roles",
-            value=" ".join([r.mention for r in member.roles[1:]]),
-            inline=False,
-        )
+        if member.roles[1:]:
+            embed.add_field(
+                name="Roles",
+                value=" ".join([r.mention for r in member.roles[1:]]),
+                inline=False,
+            )
 
         await ctx.send(embed=embed)
 
