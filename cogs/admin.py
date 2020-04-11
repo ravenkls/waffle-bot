@@ -377,6 +377,19 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=["warnremove", "removewarn", "infractionremove"])
+    async def removeinfraction(self, ctx, id: int):
+        infractions = await punishments.infractions.filter(
+            where=DBFilter(guild_id=ctx.guild.id, id=id)
+        )
+        if not infractions:
+            raise commands.errors.CommandError(f"There is no infraction with the ID {id}.")
+        else:
+            await punishments.infractions.delete_records(
+                where=DBFilter(guild_id=ctx.guild.id, id=id)
+            )
+            await ctx.send(MessageBox.success(f"Infraction {id} has been removed."))
+
     @modlogger.log_action
     @commands.guild_only()
     @commands.command()
