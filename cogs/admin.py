@@ -318,7 +318,7 @@ class Moderation(commands.Cog):
         if not infractions:
             return await ctx.send(embed=MessageBox.info(f"{member.mention} has no previous infractions."))
 
-        pages = (len(infractions) - 1) // 20 + 1
+        pages = (len(infractions) - 1) // 10 + 1
         page = max(min(pages, page), 1)
 
         last_24_hours = 0
@@ -333,7 +333,7 @@ class Moderation(commands.Cog):
                 last_14_days += 1
             if infraction["issue_date"] >= datetime.datetime.now() - datetime.timedelta(days=90):
                 last_90_days += 1
-            if (page-1)*20 <= n and len(infraction_descriptions) < 20:
+            if (page-1)*10 <= n and len(infraction_descriptions) < 10:
                 ts = humanize.naturaldelta(datetime.datetime.now() - infraction["issue_date"])
                 infraction_descriptions.append(f"**[`{infraction['id']}`] {ts} ago** • {infraction['reason']}")
 
