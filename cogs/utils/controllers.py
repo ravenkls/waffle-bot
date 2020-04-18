@@ -83,7 +83,6 @@ class PunishmentManager:
         self.infractions = await self.database.new_table(
             "infraction",
             (
-                SerialIdentifier(),
                 BigInteger("guild_id"),
                 BigInteger("member_id"),
                 BigInteger("author_id"),

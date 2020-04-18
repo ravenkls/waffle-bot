@@ -157,6 +157,7 @@ class Database:
             )
 
     async def new_table(self, name, fields):
+        fields = [SerialIdentifier()] + list(fields)
         fields = ", ".join([f'"{f.name}" {f.datatype}' for f in fields])
         async with self.connection() as conn:
             await conn.execute(f"CREATE TABLE IF NOT EXISTS {name} ({fields});")
@@ -169,6 +170,13 @@ class Database:
             yield conn
         finally:
             await conn.close()
+
+    async def execute_sql(self, sql_query):
+        """Execute an SQL query manually."""
+        if not sql_query.endswith(";"):
+            sql_query += ";"
+        async with self.connection() as conn:
+            return await self.conn.fetch(sql_query)
 
     def table(self, name):
         return DBQuery(self, name)
