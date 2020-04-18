@@ -176,7 +176,7 @@ class Database:
         if not sql_query.endswith(";"):
             sql_query += ";"
         async with self.connection() as conn:
-            return await self.conn.fetch(sql_query)
+            return await conn.fetch(sql_query)
 
     def table(self, name):
         return DBQuery(self, name)
