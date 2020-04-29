@@ -105,11 +105,6 @@ class General(commands.Cog):
         except Exception as e:
             await ctx.send("```py\n{}```".format(e))
 
-    @commands.command()
-    async def test(self, ctx):
-        inv = await ctx.bot.fetch_invite("TE4zCuz")
-        await ctx.send(str(inv.created_at))
-
     @commands.is_owner()
     @commands.command(hidden=True)
     async def storage(self, ctx):
