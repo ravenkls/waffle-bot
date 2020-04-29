@@ -108,7 +108,7 @@ class General(commands.Cog):
     @commands.command()
     async def test(self, ctx):
         inv = await ctx.bot.fetch_invite("TE4zCuz")
-        await ctx.send(inv.created_at)
+        await ctx.send(str(inv.created_at))
 
     @commands.is_owner()
     @commands.command(hidden=True)
