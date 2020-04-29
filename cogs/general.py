@@ -105,11 +105,6 @@ class General(commands.Cog):
         except Exception as e:
             await ctx.send("```py\n{}```".format(e))
 
-    @commands.command()
-    async def test(self, ctx):
-        async for log in ctx.guild.audit_logs(limit=25, action=discord.AuditLogAction.invite_create):
-            await ctx.send(str(log.created_at) + " " + str(log.user))
-
     @commands.is_owner()
     @commands.command(hidden=True)
     async def storage(self, ctx):
