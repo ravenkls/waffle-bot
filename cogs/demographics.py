@@ -30,6 +30,7 @@ class Demographics(commands.Cog):
         self.demographics_roles = await self.bot.database.new_table(
             "demographics_roles",
             (
+                
                 BigInteger("guild_id"),
                 BigInteger("role_id"),
             )
