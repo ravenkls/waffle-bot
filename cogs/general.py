@@ -108,7 +108,7 @@ class General(commands.Cog):
     @commands.command()
     async def test(self, ctx):
         async for log in ctx.guild.audit_logs(limit=25, action=discord.AuditLogAction.invite_create):
-            await ctx.send(str(log.created_at) + " " + log.user)
+            await ctx.send(str(log.created_at) + " " + str(log.user))
 
     @commands.is_owner()
     @commands.command(hidden=True)
