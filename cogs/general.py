@@ -105,6 +105,11 @@ class General(commands.Cog):
         except Exception as e:
             await ctx.send("```py\n{}```".format(e))
 
+    @commands.command()
+    async def created(self, ctx, _id: int):
+        m = await ctx.channel.fetch_message(_id)
+        await ctx.send(m.created_at)
+
     @commands.is_owner()
     @commands.command(hidden=True)
     async def storage(self, ctx):
