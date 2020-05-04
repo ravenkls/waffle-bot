@@ -162,6 +162,21 @@ class General(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=["nick"])
+    @commands.cooldown(rate=3, per=3600, type=commands.BucketType.user)
+    async def nickname(self, ctx, *, name):
+        """Set your nickname."""
+        nickname = ctx.author.display_name.split("||")[-1].strip()
+        if nickname:
+            nick_length = len(" || " + nickname)
+            max_len = 32 - nick_length
+            new_nick = name[:max_len] + " || " + nickname
+        else:
+            new_nick = name[:32]
+
+        await ctx.author.edit(nick=new_nick)
+        await ctx.message.add_reaction("👍")
+
     @commands.command()
     async def deadchannels(self, ctx, limit: int = 10):
         """Returns the top 10 channels which are most dead in the server."""
