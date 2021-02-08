@@ -16,11 +16,17 @@ class DBFilter:
         values = list(self.filter_kwargs.values())
         removes = []
 
-        for num, field_name in enumerate(self.filter_kwargs.keys(), start=placeholders_from):
+        for num, field_name in enumerate(
+            self.filter_kwargs.keys(), start=placeholders_from
+        ):
             n = num - len(removes)
             i = num - placeholders_from
             if field_name.endswith("__in"):
-                array_sql = "(" + ", ".join([f"${x}" for x in range(n, n+len(values[i]))]) + ")"
+                array_sql = (
+                    "("
+                    + ", ".join([f"${x}" for x in range(n, n + len(values[i]))])
+                    + ")"
+                )
                 array = values.pop(i)
                 for item in array[::-1]:
                     values.insert(i, item)
@@ -37,7 +43,9 @@ class DBFilter:
                 conditions[field_name[:-4]].append(f"{field_name[:-4:]} < ${n}")
             elif field_name.endswith("__ne"):
                 if values[i] is None:
-                    conditions[field_name[:-4]].append(f"{field_name[:-4:]} IS NOT NULL")
+                    conditions[field_name[:-4]].append(
+                        f"{field_name[:-4:]} IS NOT NULL"
+                    )
                     removes.append(i)
                 else:
                     conditions[field_name[:-4]].append(f"{field_name[:-4:]} != ${n}")
@@ -72,17 +80,30 @@ class DBQuery:
     async def all(self, limit=None, order_by=None, desc=False):
         """Get all records in the table."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
-        order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
+        order_by_sql = (
+            f"ORDER BY {order_by}" + (" DESC" if desc else "")
+            if order_by is not None
+            else ""
+        )
         async with self.database.connection() as conn:
-            return await conn.fetch(f"SELECT * FROM {self.name} {order_by_sql} {limit_sql};")
+            return await conn.fetch(
+                f"SELECT * FROM {self.name} {order_by_sql} {limit_sql};"
+            )
 
     async def filter(self, where: DBFilter, limit=None, order_by=None, desc=False):
         """Get records in the table based on a filter."""
         limit_sql = f"LIMIT {limit}" if limit is not None else ""
-        order_by_sql = f"ORDER BY {order_by}" + (" DESC" if desc else "") if order_by is not None else ""
+        order_by_sql = (
+            f"ORDER BY {order_by}" + (" DESC" if desc else "")
+            if order_by is not None
+            else ""
+        )
         where_sql, where_values = where.sql()
         async with self.database.connection() as conn:
-            return await conn.fetch(f"SELECT * FROM {self.name} {where_sql} {order_by_sql} {limit_sql};", *where_values)
+            return await conn.fetch(
+                f"SELECT * FROM {self.name} {where_sql} {order_by_sql} {limit_sql};",
+                *where_values,
+            )
 
     async def new_record(self, **kwargs):
         """Create a new record in a database."""
@@ -90,7 +111,8 @@ class DBQuery:
         values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
         async with self.database.connection() as conn:
             return await conn.execute(
-                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});", *kwargs.values()
+                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql});",
+                *kwargs.values(),
             )
 
     async def new_record_with_id(self, **kwargs):
@@ -100,28 +122,37 @@ class DBQuery:
         values_sql = ", ".join([f"${n}" for n, _ in enumerate(kwargs, start=1)])
         async with self.database.connection() as conn:
             return await conn.fetchval(
-                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql}) RETURNING id;", *kwargs.values()
+                f"INSERT INTO {self.name} ({fields_sql}) VALUES ({values_sql}) RETURNING id;",
+                *kwargs.values(),
             )
 
     async def update_records(self, where: DBFilter = None, **kwargs):
         """Update records in a database table."""
-        updates_sql = ", ".join([f"{field}=${n}" for n, field in enumerate(kwargs.keys(), start=1)])
+        updates_sql = ", ".join(
+            [f"{field}=${n}" for n, field in enumerate(kwargs.keys(), start=1)]
+        )
 
         async with self.database.connection() as conn:
             if where:
-                where_sql, where_values = where.sql(placeholders_from=len(kwargs)+1)
+                where_sql, where_values = where.sql(placeholders_from=len(kwargs) + 1)
                 return await conn.execute(
-                    f"UPDATE {self.name} SET {updates_sql} {where_sql};", *kwargs.values(), *where_values
+                    f"UPDATE {self.name} SET {updates_sql} {where_sql};",
+                    *kwargs.values(),
+                    *where_values,
                 )
             else:
-                return await conn.execute(f"UPDATE {self.name} SET {updates_sql};", *kwargs.values())
+                return await conn.execute(
+                    f"UPDATE {self.name} SET {updates_sql};", *kwargs.values()
+                )
 
     async def delete_records(self, *, where: DBFilter = None):
         """Delete records in a database table."""
         async with self.database.connection() as conn:
             if where:
                 where_sql, where_values = where.sql()
-                return await conn.execute(f"DELETE FROM {self.name} {where_sql};", *where_values)
+                return await conn.execute(
+                    f"DELETE FROM {self.name} {where_sql};", *where_values
+                )
             else:
                 return await conn.execute(f"DELETE FROM {self.name};")
 
@@ -133,11 +164,16 @@ class Database:
     settings_table = "server_setting"
 
     def __init__(self, url, ssl=False):
-        self.url = url + ("?sslmode=require" if ssl else "")
+        self.url = url + ("&sslmode=require" if ssl else "")
 
     async def connect(self):
         await self.new_table(
-            self.settings_table, (BigInteger("guild_id"), Text("key"), Text("value"),)
+            self.settings_table,
+            (
+                BigInteger("guild_id"),
+                Text("key"),
+                Text("value"),
+            ),
         )
 
     async def get_setting(self, guild, key):

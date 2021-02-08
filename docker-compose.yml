@@ -1,0 +1,15 @@
+version: "3"
+services:
+  db:
+    image: postgres:12.3
+    environment:
+      POSTGRES_USER: "ludb"
+      POSTGRES_PASSWORD: "changeme"
+      POSTGRES_DB: "ludb"
+    volumes:
+      - lu-db:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+
+volumes:
+  lu-db:

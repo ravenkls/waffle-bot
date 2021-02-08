@@ -12,11 +12,12 @@ from discord.ext import commands
 from .utils.db.database import DBFilter
 from .utils.messages import MessageBox
 
+from .base import BaseCog
 
-class General(commands.Cog):
+
+class General(BaseCog):
     def __init__(self, bot):
-        self.bot = bot
-        self.emoji = ""
+        super().__init__(bot)
         self.bot.remove_command("help")
         self.start_time = datetime.datetime.now()
         self.sessions = set()
@@ -71,7 +72,9 @@ class General(commands.Cog):
     @commands.command(hidden=True)
     async def update(self, ctx):
         """Get the latest from the git repository."""
-        message = await ctx.send(embed=MessageBox.loading("Checking GitHub for updates."))
+        message = await ctx.send(
+            embed=MessageBox.loading("Checking GitHub for updates.")
+        )
         out = subprocess.run("git pull", capture_output=True, shell=True)
         status = out.stdout.decode().strip().split("\n")[-1]
         if status == "Already up to date.":
@@ -86,11 +89,17 @@ class General(commands.Cog):
     async def reload(self, ctx):
         """Reload all extensions."""
         extensions = list(self.bot.extensions.keys())
-        message = await ctx.send(embed=MessageBox.loading(f"Reloading {len(extensions)} extensions..."))
+        message = await ctx.send(
+            embed=MessageBox.loading(f"Reloading {len(extensions)} extensions...")
+        )
         for e in extensions:
             self.bot.unload_extension(e)
             self.bot.load_extension(e)
-        await message.edit(embed=MessageBox.success(f"{len(extensions)} extensions have been reloaded."))
+        await message.edit(
+            embed=MessageBox.success(
+                f"{len(extensions)} extensions have been reloaded."
+            )
+        )
 
     @commands.is_owner()
     @commands.command(name="eval", hidden=True)
@@ -115,8 +124,7 @@ class General(commands.Cog):
     async def storage(self, ctx):
         """Get the size of the database."""
         async with self.bot.database.connection() as conn:
-            # TODO: probably make it get the database name automatically rather than finding it like this
-            size = await conn.fetchrow("SELECT pg_database_size('wafflebot')")
+            size = await conn.fetchrow("SELECT pg_database_size('ludb')")
         human_size = humanize.naturalsize(size["pg_database_size"])
         await ctx.send(embed=MessageBox.info(f"Database Size: `{human_size}`"))
 
@@ -138,7 +146,9 @@ class General(commands.Cog):
         creation_date = member.created_at.strftime("%d %B %Y")
         creation_ago = (now - member.created_at).days
 
-        embed = discord.Embed(title="User Details", description=member.mention, colour=member.colour)
+        embed = discord.Embed(
+            title="User Details", description=member.mention, colour=member.colour
+        )
         embed.set_author(
             name=member.name,
             icon_url=member.avatar_url_as(format="png", static_format="png"),
@@ -190,7 +200,9 @@ class General(commands.Cog):
                 else:
                     channels.append((ch, datetime.datetime(1990, 1, 1)))
         dead_channels = list(sorted(channels, key=lambda x: x[1]))[:limit]
-        msg = "\n".join([f"{n}. {ch[0].mention}" for n, ch in enumerate(dead_channels, start=1)])
+        msg = "\n".join(
+            [f"{n}. {ch[0].mention}" for n, ch in enumerate(dead_channels, start=1)]
+        )
         await message.edit(embed=MessageBox.info(msg))
 
     @commands.command()

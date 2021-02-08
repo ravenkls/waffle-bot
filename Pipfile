@@ -1,24 +1,23 @@
 [[source]]
-name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-
-[dev-packages]
-autopep8 = "*"
-rope = "*"
+name = "pypi"
 
 [packages]
-discord = "*"
 humanize = "*"
+discord = "*"
 asyncpg = "*"
-discord-py = "*"
-matplotlib = "*"
+aiohttp = "*"
+bs4 = "*"
+lxml = "*"
+xmltodict = "*"
+python-dateutil = "*"
+async-lru = "*"
+
+[dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
 
 [scripts]
 start = "python bot.py"
-
-[pipenv]
-allow_prereleases = true
