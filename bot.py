@@ -47,29 +47,37 @@ if __name__ == "__main__":
         level=logging.INFO, format="[%(levelname)s] [%(name)s] %(message)s"
     )
 
-    if not os.path.exists("settings.cfg"):
-        generate_settings()
-        logging.critical(
-            "No config found. generating 'settings.cfg', please fill "
-            "in the required settings before running the bot"
-        )
-        sys.exit()
-
-    config = configparser.ConfigParser()
-    config.read("settings.cfg")
     try:
-        token = config["BotSettings"]["token"]
-        database_url = config["BotSettings"]["database_url"]
-        prefix = config["BotSettings"]["prefix"]
-        login_data = (
-            config["BotSettings"]["portal_username"],
-            config["BotSettings"]["portal_password"],
-        )
-    except (configparser.NoSectionError, KeyError):
-        logging.critical(
-            "Malformed 'settings.cfg' file, please fix this before running the bot."
-        )
-        sys.exit()
+        token = os.environ["TOKEN"]
+        database_url = os.environ["DATABASE_URL"]
+        prefix = os.environ["PREFIX"]
+        login_data = (os.environ["PORTAL_USERNAME"], os.environ["PORTAL_PASSWORD"])
+    except KeyError:
+
+        if not os.path.exists("settings.cfg"):
+            generate_settings()
+            logging.critical(
+                "No config found. generating 'settings.cfg', please fill "
+                "in the required settings before running the bot"
+            )
+            sys.exit()
+
+        config = configparser.ConfigParser()
+        config.read("settings.cfg")
+
+        try:
+            token = config["BotSettings"]["token"]
+            database_url = config["BotSettings"]["database_url"]
+            prefix = config["BotSettings"]["prefix"]
+            login_data = (
+                config["BotSettings"]["portal_username"],
+                config["BotSettings"]["portal_password"],
+            )
+        except (configparser.NoSectionError, KeyError):
+            logging.critical(
+                "Malformed 'settings.cfg' file, please fix this before running the bot."
+            )
+            sys.exit()
 
     bot = LancasterUniBot(prefix, database_url, login_data)
     bot.run(token)
